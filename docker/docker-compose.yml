@@ -8,10 +8,9 @@ services:
     volumes:
       - pod-data:/data
     environment:
-      CSS_PORT: 3000
-      CSS_DATA_DIR: /data
-      # Uncomment to auto-bootstrap agents on startup:
-      # BOOTSTRAP_AGENTS: alpha,beta
+      SAP_PORT: 3000
+      SAP_DATA_DIR: /data
+      BOOTSTRAP_AGENTS: ${BOOTSTRAP_AGENTS:-}
 
 volumes:
   pod-data:
