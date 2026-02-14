@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.solid-data/
+*.tsbuildinfo
+.env
+.env.local
+coverage/

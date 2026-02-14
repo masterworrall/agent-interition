@@ -1,0 +1,33 @@
+{
+  "name": "@interition/solid-agent-pods",
+  "version": "0.1.0",
+  "description": "Solid Protocol infrastructure for AI agents — WebID identity and Pod storage",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "css:start": "community-solid-server -c @css:config/file.json -f .solid-data --seedConfig css-config/seed.json -p 3000",
+    "bootstrap": "tsx src/bootstrap/cli.ts",
+    "demo": "tsx src/demo/two-agents.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc",
+    "clean": "rm -rf dist .solid-data"
+  },
+  "dependencies": {
+    "@inrupt/solid-client": "^2.1.0",
+    "@inrupt/solid-client-authn-node": "^2.1.0",
+    "@solid/community-server": "^7.1.3",
+    "n3": "^1.21.3"
+  },
+  "devDependencies": {
+    "@types/n3": "^1.21.1",
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

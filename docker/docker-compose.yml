@@ -1,0 +1,17 @@
+services:
+  solid-agent-pods:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - pod-data:/data
+    environment:
+      CSS_PORT: 3000
+      CSS_DATA_DIR: /data
+      # Uncomment to auto-bootstrap agents on startup:
+      # BOOTSTRAP_AGENTS: alpha,beta
+
+volumes:
+  pod-data:
