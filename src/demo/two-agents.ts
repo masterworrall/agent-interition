@@ -5,7 +5,7 @@ import { grantAccess, revokeAccess } from '../sharing/acl-manager.js';
 const SERVER_URL = process.env.CSS_URL ?? 'http://localhost:3000';
 
 async function main() {
-  console.log('=== Solid Agent Pods Demo: Two Agents Sharing Data ===\n');
+  console.log('=== Agent Interition Demo: Two Agents Sharing Data ===\n');
 
   // Step 1: Provision two agents
   console.log('--- Step 1: Provisioning Agent Alpha ---');

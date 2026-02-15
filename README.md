@@ -1,8 +1,8 @@
-# Solid Agent Pods
+# Agent Interition
 
 > Give AI agents portable identity and personal data storage
 
-**Solid Agent Pods** provides [Solid Protocol](https://solidproject.org/) infrastructure for AI agents. Starting with [OpenClaw](https://github.com/steinbergpeter/OpenClaw) integration, we enable agents to have:
+**Agent Interition** provides [Solid Protocol](https://solidproject.org/) infrastructure for AI agents. Starting with [OpenClaw](https://github.com/steinbergpeter/OpenClaw) integration, we enable agents to have:
 
 - **Persistent Identity** — WebID for each agent
 - **Personal Storage** — Pod containers for agent data
@@ -92,7 +92,7 @@ This creates:
 ### Programmatic usage
 
 ```typescript
-import { provisionAgent, getAuthenticatedFetch, grantAccess, revokeAccess } from '@interition/solid-agent-pods';
+import { provisionAgent, getAuthenticatedFetch, grantAccess, revokeAccess } from '@interition/agent-interition';
 
 // Provision an agent
 const agent = await provisionAgent({
@@ -176,7 +176,7 @@ await revokeAccess(
 ## Project Structure
 
 ```
-solid-agent-pods/
+agent-interition/
 ├── src/
 │   ├── bootstrap/         # Agent provisioning (account, pod, WebID, containers)
 │   ├── auth/              # Client credentials → Bearer token auth

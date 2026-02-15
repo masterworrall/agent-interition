@@ -1,5 +1,5 @@
 services:
-  solid-agent-pods:
+  agent-interition:
     build:
       context: ..
       dockerfile: docker/Dockerfile

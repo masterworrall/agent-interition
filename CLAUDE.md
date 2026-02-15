@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**solid-agent-pods** provides Solid Protocol infrastructure for AI agents, starting with OpenClaw integration.
+**agent-interition** provides Solid Protocol infrastructure for AI agents, starting with OpenClaw integration.
 
 The mission: Give AI agents portable identity (WebID) and personal data storage (Pods) that users own and control.
 
@@ -102,7 +102,7 @@ Target: `docker-compose up` → working agent Pods
 ## File Structure
 
 ```
-solid-agent-pods/
+agent-interition/
 ├── CLAUDE.md              # This file
 ├── README.md              # Public-facing documentation
 ├── docs/

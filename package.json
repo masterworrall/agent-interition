@@ -1,5 +1,5 @@
 {
-  "name": "@interition/solid-agent-pods",
+  "name": "@interition/agent-interition",
   "version": "0.1.0",
   "description": "Solid Protocol infrastructure for AI agents — WebID identity and Pod storage",
   "type": "module",

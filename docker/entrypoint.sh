@@ -44,7 +44,7 @@ if [ -n "${BOOTSTRAP_AGENTS}" ]; then
   IFS="$OLD_IFS"
 fi
 
-echo "[entrypoint] Solid Agent Pods running. CSS PID: ${CSS_PID}"
+echo "[entrypoint] Agent Interition running. CSS PID: ${CSS_PID}"
 
 # Keep container running
 wait $CSS_PID

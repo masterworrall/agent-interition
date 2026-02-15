@@ -470,7 +470,7 @@ services:
 
 | Aspect | Decision |
 |--------|----------|
-| **Repo name** | `interition/solid-agent-pods` (or similar) |
+| **Repo name** | `interition/agent-interition` (or similar) |
 | **License** | MIT or Apache 2.0 (permissive, enterprise-friendly) |
 | **Organisation** | Under Interition GitHub org (brand association) |
 | **Documentation** | Strategy doc moves to new repo `/docs/STRATEGY.md` |
