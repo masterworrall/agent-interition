@@ -257,9 +257,14 @@ agent-interition/
 - [x] CLI commands + shell wrappers
 - [x] SKILL.md, SECURITY.md, reference docs
 - [ ] Submit to ClawHub
-- [ ] Tutorial: "Give your agents memory with Solid"
+- [x] Tutorial: "Give your agents memory with Solid"
 
-**Phase 3: Moltbook Integration**
+**Phase 3: Dogfooding**
+
+- [ ] Set up hardened OpenClaw instance
+- [ ] Install and validate Solid Agent Storage Skill end-to-end
+
+**Phase 4: Moltbook Integration**
 
 - [ ] Moltbook Bridge Skill
 - [ ] Archive posts/comments to Pod
@@ -275,7 +280,7 @@ This is an open source project. Security is critical in the agent ecosystem — 
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE). The "Interition" name and logo are trademarks of Interition. This license does not grant permission to use them.
+Apache 2.0 — see [LICENSE](LICENSE).
 
 ## Links
 

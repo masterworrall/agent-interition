@@ -509,10 +509,27 @@ The strategy diagrams show pods at `/agents/{name}/`, but CSS v7 creates pods at
 - [x] SKILL.md, SECURITY.md, reference docs
 - [x] Build script (`npm run skill:build`)
 - [x] End-to-end tested against live CSS
-- [ ] Submit to ClawHub
-- [ ] Tutorial: "Give your agents memory with Solid"
+- [ ] Submit to ClawHub (eligible 2026-02-22)
+- [x] Tutorial: "Give your agents memory with Solid"
 
-### Phase 3: Moltbook Integration (6 weeks)
+### Phase 3: Dogfooding
+
+**Goal:** Validate the Skill works end-to-end by running it ourselves with a real OpenClaw instance
+
+- [ ] Set up hardened OpenClaw instance
+  - [ ] Docker deployment, bind to localhost only
+  - [ ] Minimal permissions, scoped tokens
+  - [ ] Patched against CVE-2026-25253
+  - [ ] "Ask before executing" mode enabled
+- [ ] Install Solid Agent Storage Skill into OpenClaw
+- [ ] Validate full user journey
+  - [ ] Agent provisions itself a Pod autonomously
+  - [ ] Agent stores and retrieves data across sessions
+  - [ ] Multi-agent sharing scenario (grant/revoke access)
+- [ ] Document findings — what works, what's rough, what needs fixing
+- [ ] Submit to ClawHub (after dogfooding confirms readiness)
+
+### Phase 4: Moltbook Integration
 
 **Goal:** Capture the 1.6M bot market with portable identity narrative
 
@@ -533,7 +550,7 @@ The strategy diagrams show pods at `/agents/{name}/`, but CSS v7 creates pods at
   - [ ] Target bot creators who've been burned by platform bans
   - [ ] Leverage social media lock-in horror stories
 
-### Phase 4: Scale (ongoing)
+### Phase 5: Scale (ongoing)
 
 - [ ] Hosted Pod service for agents
 - [ ] Analytics dashboard
@@ -605,7 +622,11 @@ The strategy diagrams show pods at `/agents/{name}/`, but CSS v7 creates pods at
 - Documentation effort
 - Community engagement
 
-### Phase 3+ (Scale)
+### Phase 3 (Dogfooding)
+- 1 developer, 1-2 weeks
+- OpenClaw instance (local Docker)
+
+### Phase 4+ (Scale)
 - Pod hosting infrastructure
 - Support capacity
 - Marketing/evangelism
