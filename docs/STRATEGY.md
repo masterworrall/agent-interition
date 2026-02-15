@@ -432,6 +432,10 @@ services:
 
 ---
 
+### Known Issue: Pod URL Path
+
+The strategy diagrams show pods at `/agents/{name}/`, but CSS v7 creates pods at `/{name}/` (top-level). The `provisionAgent()` function logs "Creating pod at /agents/{name}/" but the actual URL returned is `/{name}/`. This is cosmetic — the code works correctly using the returned URL. If we want the `/agents/` prefix, we'd need to configure CSS's pod creation path or use a reverse proxy. Not blocking; just a discrepancy between docs and reality.
+
 ### Open Questions (To Be Decided)
 
 1. **Vocabulary**: Create `interition:Agent` ontology or use existing? (foaf:Agent exists but may need extensions)
@@ -489,18 +493,23 @@ services:
 >
 > **Action:** Build prototype first, learn, then revisit GTM.
 
-### Phase 1: Proof of Concept (2 weeks)
+### Phase 1: Proof of Concept (Complete)
 
-- [ ] Build minimal Agent Service
-- [ ] Local Pod provisioning
-- [ ] Basic ACL management
-- [ ] Demo: Two OpenClaw agents sharing data via Pods
+- [x] Build minimal Agent Service
+- [x] Local Pod provisioning
+- [x] Basic ACL management
+- [x] Demo: Two OpenClaw agents sharing data via Pods
 
-### Phase 2: OpenClaw Integration (4 weeks)
+### Phase 2: OpenClaw Integration (Complete — pending ClawHub submission)
 
-- [ ] Package as OpenClaw Skill
-- [ ] Submit to OpenClaw Skills marketplace
-- [ ] Documentation and examples
+- [x] Package as OpenClaw Skill
+- [x] CLI commands (provision, read, write, grant-access, revoke-access, status)
+- [x] Encrypted credentials store (AES-256-GCM, PBKDF2 key derivation)
+- [x] Shell script wrappers for Skill invocation
+- [x] SKILL.md, SECURITY.md, reference docs
+- [x] Build script (`npm run skill:build`)
+- [x] End-to-end tested against live CSS
+- [ ] Submit to ClawHub
 - [ ] Tutorial: "Give your agents memory with Solid"
 
 ### Phase 3: Moltbook Integration (6 weeks)
