@@ -318,7 +318,8 @@ Create `src/training/step3-sharing.ts`:
  */
 import { provisionAgent } from '../bootstrap/index.js';
 import { getAuthenticatedFetch } from '../auth/index.js';
-import { grantAccess, revokeAccess, AccessMode } from '../sharing/index.js';
+import { grantAccess, revokeAccess } from '../sharing/index.js';
+import type { AccessMode } from '../sharing/index.js';
 
 const SERVER_URL = 'http://localhost:3000';
 
@@ -382,7 +383,7 @@ async function main() {
   await grantAccess(
     secretUrl,           // the resource to share
     eve.webId,           // who to share with
-    [AccessMode.Read],   // what access to give
+    ['Read'] as AccessMode[],   // what access to give
     danFetch             // Dan's authenticated fetch (he's the owner)
   );
   console.log('Access granted!\n');
@@ -457,7 +458,8 @@ Create `src/training/step4-access-modes.ts`:
  */
 import { provisionAgent } from '../bootstrap/index.js';
 import { getAuthenticatedFetch } from '../auth/index.js';
-import { grantAccess, revokeAccess, AccessMode } from '../sharing/index.js';
+import { grantAccess, revokeAccess } from '../sharing/index.js';
+import type { AccessMode } from '../sharing/index.js';
 
 const SERVER_URL = 'http://localhost:3000';
 
@@ -499,7 +501,7 @@ async function main() {
   await grantAccess(
     docUrl,
     grace.webId,
-    [AccessMode.Read, AccessMode.Write],  // Two modes!
+    ['Read', 'Write'] as AccessMode[],  // Two modes!
     frankFetch
   );
   console.log('Granted!\n');

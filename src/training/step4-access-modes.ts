@@ -12,7 +12,8 @@
  */
 import { provisionAgent } from '../bootstrap/index.js';
 import { getAuthenticatedFetch } from '../auth/index.js';
-import { grantAccess, revokeAccess, AccessMode } from '../sharing/index.js';
+import { grantAccess, revokeAccess } from '../sharing/index.js';
+import type { AccessMode } from '../sharing/index.js';
 
 const SERVER_URL = 'http://localhost:3000';
 
@@ -54,7 +55,7 @@ async function main() {
   await grantAccess(
     docUrl,
     grace.webId,
-    [AccessMode.Read, AccessMode.Write],
+    ['Read', 'Write'] as AccessMode[],
     frankFetch
   );
   console.log('Granted!\n');
