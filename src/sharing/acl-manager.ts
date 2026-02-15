@@ -10,6 +10,7 @@ export async function grantAccess(
   agentWebId: string,
   modes: AccessMode[],
   authFetch: typeof fetch,
+  ownerWebId?: string,
 ): Promise<void> {
   const aclUrl = await getAclUrl(resourceUrl, authFetch);
   const existingAcl = await fetchAclContent(aclUrl, authFetch);
@@ -26,10 +27,10 @@ export async function grantAccess(
     acl:mode ${modeUris}.
 `;
 
-  // Append the new rule to existing ACL (or create new if empty)
+  // Append the new rule to existing ACL (or create new with owner rule if empty)
   const aclContent = existingAcl
     ? `${existingAcl}\n${newRule}`
-    : buildBaseAcl(resourceUrl) + newRule;
+    : buildBaseAcl(resourceUrl, ownerWebId) + newRule;
 
   const res = await authFetch(aclUrl, {
     method: 'PUT',
@@ -108,9 +109,22 @@ async function fetchAclContent(aclUrl: string, authFetch: typeof fetch): Promise
   throw new Error(`Failed to fetch ACL: ${res.status}`);
 }
 
-function buildBaseAcl(resourceUrl: string): string {
-  return `@prefix acl: <http://www.w3.org/ns/auth/acl#>.
+function buildBaseAcl(resourceUrl: string, ownerWebId?: string): string {
+  let base = `@prefix acl: <http://www.w3.org/ns/auth/acl#>.
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 
 `;
+
+  // Always include an owner rule so the Pod owner retains full access
+  if (ownerWebId) {
+    base += `<#owner>
+    a acl:Authorization;
+    acl:agent <${ownerWebId}>;
+    acl:accessTo <${resourceUrl}>;
+    acl:mode acl:Read, acl:Write, acl:Control.
+
+`;
+  }
+
+  return base;
 }

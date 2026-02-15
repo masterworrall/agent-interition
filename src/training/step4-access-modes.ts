@@ -56,7 +56,8 @@ async function main() {
     docUrl,
     grace.webId,
     ['Read', 'Write'] as AccessMode[],
-    frankFetch
+    frankFetch,
+    frank.webId  // owner WebID — ensures Frank keeps access
   );
   console.log('Granted!\n');
 

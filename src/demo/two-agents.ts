@@ -69,7 +69,7 @@ async function main() {
 
   // Step 4: Alpha grants Beta read access via WAC
   console.log('\n--- Step 4: Alpha grants Beta read access ---');
-  await grantAccess(greetingUrl, beta.webId, ['Read'], alphaFetch);
+  await grantAccess(greetingUrl, beta.webId, ['Read'], alphaFetch, alpha.webId);
   console.log('  ✓ Access granted!');
 
   // Step 5: Beta reads — should succeed (200)

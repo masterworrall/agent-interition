@@ -79,7 +79,8 @@ async function main() {
     secretUrl,           // the resource to share
     eve.webId,           // who to share with
     ['Read'] as AccessMode[],   // what access to give
-    danFetch             // Dan's authenticated fetch (he's the owner)
+    danFetch,            // Dan's authenticated fetch (he's the owner)
+    dan.webId            // owner WebID — ensures Dan keeps access
   );
   console.log('Access granted!\n');
 
