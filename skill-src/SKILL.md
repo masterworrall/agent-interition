@@ -3,7 +3,7 @@ name: solid-agent-storage
 description: Give your AI agent persistent identity (WebID) and personal data storage (Pod) using the Solid Protocol
 version: 0.1.0
 author: Interition
-license: MIT
+license: Apache-2.0
 metadata: {"requires": {"bins": ["node", "docker"], "env": ["SOLID_SERVER_URL", "INTERITION_PASSPHRASE"]}, "categories": ["storage", "identity", "data"], "homepage": "https://github.com/interition/agent-interition"}
 ---
 

@@ -475,7 +475,7 @@ The strategy diagrams show pods at `/agents/{name}/`, but CSS v7 creates pods at
 | Aspect | Decision |
 |--------|----------|
 | **Repo name** | `interition/agent-interition` (or similar) |
-| **License** | MIT or Apache 2.0 (permissive, enterprise-friendly) |
+| **License** | Apache 2.0 (permissive, enterprise-friendly, includes trademark clause) |
 | **Organisation** | Under Interition GitHub org (brand association) |
 | **Documentation** | Strategy doc moves to new repo `/docs/STRATEGY.md` |
 

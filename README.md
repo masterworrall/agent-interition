@@ -275,7 +275,7 @@ This is an open source project. Security is critical in the agent ecosystem — 
 
 ## License
 
-MIT
+Apache 2.0 — see [LICENSE](LICENSE). The "Interition" name and logo are trademarks of Interition. This license does not grant permission to use them.
 
 ## Links
 
