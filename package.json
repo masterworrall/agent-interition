@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "tsc",
-    "clean": "rm -rf dist .solid-data"
+    "skill:build": "node scripts/build-skill.js",
+    "clean": "rm -rf dist .solid-data skill"
   },
   "dependencies": {
     "@inrupt/solid-client": "^2.1.0",

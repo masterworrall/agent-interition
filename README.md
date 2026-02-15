@@ -142,7 +142,53 @@ await revokeAccess(
 | `npm test` | Run unit tests |
 | `CSS_URL=http://localhost:3000 npm test` | Run unit + integration tests |
 | `npm run build` | Compile TypeScript |
-| `npm run clean` | Remove dist/ and .solid-data/ |
+| `npm run skill:build` | Build OpenClaw Skill package |
+| `npm run clean` | Remove dist/, .solid-data/, and skill/ |
+
+## OpenClaw Skill
+
+This project packages as an OpenClaw Skill. Once published to ClawHub, OpenClaw users can install it with:
+
+```bash
+clawhub install solid-agent-storage
+```
+
+### Building the Skill locally
+
+```bash
+# Build the Skill package
+npm run skill:build
+
+# Output is in skill/solid-agent-storage/
+```
+
+### Using the Skill
+
+Set the passphrase (used to encrypt stored credentials):
+```bash
+export INTERITION_PASSPHRASE="your-passphrase"
+```
+
+Provision an agent:
+```bash
+skill/solid-agent-storage/scripts/provision.sh --name myagent --displayName "My Agent"
+```
+
+Write data:
+```bash
+skill/solid-agent-storage/scripts/write.sh --agent myagent \
+  --url "http://localhost:3000/agents/myagent/memory/note.ttl" \
+  --content '<#note> <http://schema.org/text> "Hello".' \
+  --content-type "text/turtle"
+```
+
+Read data:
+```bash
+skill/solid-agent-storage/scripts/read.sh --agent myagent \
+  --url "http://localhost:3000/agents/myagent/memory/note.ttl"
+```
+
+All commands output JSON to stdout and errors to stderr.
 
 ## Architecture
 
@@ -181,12 +227,17 @@ agent-interition/
 │   ├── bootstrap/         # Agent provisioning (account, pod, WebID, containers)
 │   ├── auth/              # Client credentials → Bearer token auth
 │   ├── sharing/           # WAC access control (grant/revoke)
+│   ├── cli/               # CLI commands for OpenClaw Skill
 │   └── demo/              # Two-agent sharing demo
+├── skill-src/             # OpenClaw Skill source (SKILL.md, scripts, docs)
+├── scripts/               # Build scripts
 ├── css-config/            # Community Solid Server configuration
 ├── docker/                # Dockerfile, docker-compose, entrypoint
 └── tests/
     ├── bootstrap/         # Unit tests for provisioning
     ├── sharing/           # Unit tests for ACL management
+    ├── cli/               # Unit tests for CLI + credentials
+    ├── skill/             # Skill package validation
     └── integration/       # E2E two-agent sharing tests
 ```
 
@@ -199,9 +250,12 @@ agent-interition/
 - [x] Pod provisioning
 - [x] Demo: Two agents sharing data
 
-**Phase 2: OpenClaw Integration** — Next
+**Phase 2: OpenClaw Integration** — Complete
 
-- [ ] Package as OpenClaw Skill
+- [x] Package as OpenClaw Skill (`npm run skill:build`)
+- [x] Encrypted credentials store (AES-256-GCM)
+- [x] CLI commands + shell wrappers
+- [x] SKILL.md, SECURITY.md, reference docs
 - [ ] Submit to ClawHub
 - [ ] Tutorial: "Give your agents memory with Solid"
 

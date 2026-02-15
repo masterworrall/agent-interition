@@ -131,13 +131,35 @@ agent-interition/
 │   └── STRATEGY.md        # Full strategy document
 ├── src/
 │   ├── bootstrap/         # WebID + Pod provisioning
-│   ├── tunnel/            # Cloudflare integration
-│   └── skill/             # OpenClaw Skill wrapper
+│   ├── auth/              # Client credentials → Bearer token auth
+│   ├── sharing/           # WAC access control (grant/revoke)
+│   ├── cli/               # CLI commands for OpenClaw Skill
+│   │   ├── credentials-store.ts  # AES-256-GCM encrypted credential storage
+│   │   ├── args.ts        # Shared argument parsing
+│   │   ├── provision.ts   # Provision agent → save credentials
+│   │   ├── read.ts        # Read resource from Pod
+│   │   ├── write.ts       # Write data to Pod
+│   │   ├── grant-access.ts # Grant WAC access
+│   │   ├── revoke-access.ts # Revoke WAC access
+│   │   └── status.ts      # List provisioned agents
+│   ├── demo/              # Two-agent sharing demo
+│   └── training/          # Step-by-step training scripts
+├── skill-src/             # OpenClaw Skill package source
+│   ├── SKILL.md           # Skill instructions (YAML frontmatter + markdown)
+│   ├── SECURITY.md        # Security manifest for ClawHub
+│   ├── scripts/           # Shell wrappers (provision.sh, read.sh, etc.)
+│   └── references/        # Solid primer, troubleshooting guide
+├── scripts/
+│   └── build-skill.js     # Assembles skill/ from dist/ + skill-src/
+├── skill/                 # Build output (gitignored)
 ├── css-config/            # Community Solid Server config
 ├── docker/
 │   └── docker-compose.yml
 └── tests/
-    ├── conformance/       # Solid conformance tests
+    ├── bootstrap/         # Unit tests for provisioning
+    ├── sharing/           # Unit tests for ACL management
+    ├── cli/               # Unit tests for CLI + credentials store
+    ├── skill/             # Skill package validation tests
     └── integration/       # Agent-to-agent scenarios
 ```
 
@@ -149,8 +171,15 @@ agent-interition/
 - [x] Pod provisioning
 - [x] Demo: Two agents sharing data
 
-### Phase 2: OpenClaw Integration
-- [ ] Package as OpenClaw Skill
+### Phase 2: OpenClaw Integration (Complete)
+- [x] Encrypted credentials store (AES-256-GCM)
+- [x] CLI commands (provision, read, write, grant-access, revoke-access, status)
+- [x] Shell script wrappers for OpenClaw Skill invocation
+- [x] SKILL.md with YAML frontmatter + agent instructions
+- [x] SECURITY.md security manifest
+- [x] Reference docs (Solid primer, troubleshooting)
+- [x] Build script (`npm run skill:build`)
+- [x] Skill package validation tests
 - [ ] Submit to ClawHub
 - [ ] Tutorial: "Give your agents memory with Solid"
 
