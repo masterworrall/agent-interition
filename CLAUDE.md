@@ -74,6 +74,28 @@ All decisions are documented in `/docs/STRATEGY.md`. Summary:
 | WebID Ownership | User-owned agents |
 | Network Access | Cloudflare Tunnel (Interition-hosted default) |
 
+## What This Project Is (and Isn't)
+
+This project is **infrastructure for agents**, not agents themselves. An agent is some external thing (an OpenClaw instance, a Moltbook bot, a custom AI) that *uses* our library to obtain a WebID and Pod. We provide the plumbing — identity, storage, and access control — not the agent logic.
+
+### Code Layers
+
+The codebase has two distinct layers with different portability:
+
+| Layer | Files | Standard? | Notes |
+|-------|-------|-----------|-------|
+| **CSS Account API** | `src/bootstrap/css-client.ts` | **No** — CSS-specific | Account creation, password login, pod creation, client credentials. Tightly coupled to CSS v7. Would break if we swapped to another Solid server. |
+| **Solid Protocol** | `src/sharing/`, `src/bootstrap/pod-structure.ts`, training scripts | **Yes** — W3C standards (LDP, WAC) | Reading/writing resources, creating containers, managing ACLs. Works against any Solid-compliant server. |
+
+All HTTP calls use raw `fetch`. The Inrupt client libraries (`@inrupt/solid-client`, `@inrupt/solid-client-authn-node`) are listed in `package.json` but are **not used anywhere in the code** — they should be removed or adopted intentionally in Phase 2.
+
+### Sharing Model
+
+A single CSS instance serves multiple agents' Pods. There are two sharing scenarios:
+
+- **Local sharing** (agents on the same CSS): Straightforward — same server, same auth system. This is what Phase 1 demonstrates.
+- **External sharing** (agents on different servers): Requires publicly resolvable WebIDs and internet-reachable Pods. This is where Cloudflare tunnels (or similar) become necessary. Not yet implemented.
+
 ## Core Principles
 
 ### 1. Security First
@@ -121,11 +143,11 @@ agent-interition/
 
 ## Roadmap
 
-### Phase 1: Proof of Concept (Current)
-- [ ] Basic CSS running in Docker
-- [ ] WebID generation for agents
-- [ ] Pod provisioning
-- [ ] Demo: Two agents sharing data
+### Phase 1: Proof of Concept (Complete)
+- [x] Basic CSS running in Docker
+- [x] WebID generation for agents
+- [x] Pod provisioning
+- [x] Demo: Two agents sharing data
 
 ### Phase 2: OpenClaw Integration
 - [ ] Package as OpenClaw Skill
