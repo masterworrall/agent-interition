@@ -16,6 +16,24 @@ This training walks you through everything Phase 1 built. By the end you will un
 
 ---
 
+## A Note on Docker
+
+You may have noticed a `docker/` directory in this project. The Docker setup is built for **deployment** — it packages CSS, auto-bootstraps agents, and configures a Cloudflare tunnel in a single `docker-compose up`.
+
+This training runs CSS **locally** instead, using `npm run css:start`. This is simpler for learning because you can see everything directly on your machine — no container layer in between.
+
+| | Local (`npm run css:start`) | Docker (`docker-compose up`) |
+|---|---|---|
+| CSS server | Runs on your machine | Runs in a container |
+| Data storage | `.solid-data/` folder | `pod-data` Docker volume |
+| Agent bootstrap | Manual (CLI or scripts) | Automatic via `BOOTSTRAP_AGENTS` env var |
+| Port | 3000 | 3000 (mapped) |
+| Use case | Development / training | Deployment / demos |
+
+You do **not** need Docker running for this training. Everything here uses the local server.
+
+---
+
 ## Part 1: Get the Code
 
 ```bash
