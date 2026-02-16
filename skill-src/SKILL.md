@@ -1,7 +1,7 @@
 ---
 name: solid-agent-storage
 description: Give your AI agent persistent identity (WebID) and personal data storage (Pod) using the Solid Protocol
-version: 0.1.0
+version: 0.1.1
 author: Interition
 license: Apache-2.0
 metadata: {"requires": {"bins": ["node", "docker"], "env": ["SOLID_SERVER_URL", "INTERITION_PASSPHRASE"]}, "categories": ["storage", "identity", "data"], "homepage": "https://github.com/masterworrall/agent-interition"}
@@ -20,10 +20,12 @@ This Skill gives you a **Solid Pod** — a personal data store with a **WebID** 
 
 ## Setup
 
+This Skill requires a running [Community Solid Server](https://github.com/CommunitySolidServer/CommunitySolidServer) (CSS). The server is not included in this package — see the [source repository](https://github.com/masterworrall/agent-interition) for Docker setup instructions.
+
 Before using any commands, ensure:
-1. The Solid server is running (`docker-compose up` in the agent-interition directory)
-2. `SOLID_SERVER_URL` is set (default: `http://localhost:3000`)
-3. `INTERITION_PASSPHRASE` is set (used to encrypt stored credentials)
+1. A Community Solid Server is running and reachable (default: `http://localhost:3000`)
+2. `SOLID_SERVER_URL` is set to your server's URL (default: `http://localhost:3000`). **Only point this at a server you control and trust** — the Skill will exchange credentials with it.
+3. `INTERITION_PASSPHRASE` is set (used to encrypt stored credentials). Use a strong passphrase and keep it secret.
 
 ## Commands
 

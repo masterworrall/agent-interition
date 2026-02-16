@@ -39,6 +39,9 @@ for (const ext of ['.js', '.d.ts', '.js.map']) {
 // Copy skill-src contents
 cpSync(join(ROOT, 'skill-src'), SKILL_DIR, { recursive: true });
 
+// Remove .js.map files — ClawHub only accepts text files
+execSync(`find "${SKILL_DIR}" -name "*.js.map" -delete`);
+
 console.log('[build-skill] Skill package assembled at skill/solid-agent-storage/');
 console.log('[build-skill] Contents:');
 execSync(`find "${SKILL_DIR}" -type f | sort`, { stdio: 'inherit' });
