@@ -2,13 +2,20 @@
 
 How to run a hardened OpenClaw instance with the Solid Agent Storage Skill for end-to-end testing.
 
+Two modes are supported:
+- **Local** — runs CSS in a container alongside OpenClaw
+- **Remote** — connects to a web-hosted CSS (e.g. `solidcommunity.net`)
+
 ## Prerequisites
 
 - Docker Desktop
 - An Anthropic API key (set a hard spend limit in the Anthropic console — we used $5)
 - The Skill built locally (`npm run skill:build`)
+- OpenClaw Docker image built locally (`openclaw:local`)
 
 ## Architecture
+
+### Local mode (`--profile local`)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -42,24 +49,54 @@ How to run a hardened OpenClaw instance with the Solid Agent Storage Skill for e
             └───────────┘
 ```
 
-### Why shared network namespace?
+OpenClaw shares CSS's network namespace (`network_mode: service:css`) so it can reach CSS at `localhost:3000`. This is required because CSS validates WebID tokens — they must use HTTPS or HTTP on localhost.
 
-CSS validates WebID tokens by checking that the WebID URI is either HTTPS or HTTP on localhost. In a normal Docker setup, OpenClaw and CSS are separate containers — OpenClaw would need to reach CSS via its Docker service name (`http://css:3000`), but CSS rejects tokens with `http://css:3000` WebIDs as insecure.
+### Remote mode (`--profile remote`)
 
-By using `network_mode: service:css`, OpenClaw shares CSS's network stack. Both containers see the same `localhost`, so OpenClaw reaches CSS at `http://localhost:3000` and CSS accepts the WebID tokens.
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Docker Network: dogfood (isolated bridge)                    │
+│                                                                │
+│  ┌──────────────┐          ┌───────────┐                      │
+│  │  OpenClaw     │          │  Squid    │                      │
+│  │  (hardened)   │          │  Proxy    │                      │
+│  │               │          │  :3128    │                      │
+│  │  read-only    │          │           │     ┌─────────────┐ │
+│  │  non-root     │──HTTPS──▶│  Allows:  │────▶│  Internet   │ │
+│  │  cap-drop ALL │          │  anthropic│     │             │ │
+│  │               │          │  .com +   │     │             │ │
+│  │  Gateway      │          │  solid    │     └─────────────┘ │
+│  │  :18789       │          │  server   │           │         │
+│  └───────┬───────┘          └───────────┘           │         │
+│          │                                          ▼         │
+└──────────┼──────────────────────────────  ┌─────────────────┐ │
+           │                                │ solidcommunity  │ │
+   127.0.0.1:18789                          │ .net (or your   │ │
+           │                                │ own CSS v7)     │ │
+     ┌─────┴─────┐                          │ HTTPS :443      │ │
+     │  Host Mac  │                          └─────────────────┘ │
+     │  Browser   │                                              │
+     └───────────┘                                               │
+                                                                 │
+└────────────────────────────────────────────────────────────────┘
+```
+
+No local CSS. OpenClaw connects to a remote CSS over HTTPS. The Squid proxy allows both `api.anthropic.com` and the remote Solid server's domain.
 
 ### Service roles
 
-| Service | Role | Network |
-|---------|------|---------|
-| **css** | Community Solid Server — Pod storage, WebID, OIDC tokens | dogfood bridge |
-| **openclaw** | AI agent runtime — runs Skills, talks to LLM | Shares css namespace |
-| **proxy** | Squid outbound firewall — only allows api.anthropic.com | dogfood bridge |
-| **init-volumes** | One-shot — sets uid 1000 ownership on named volumes, then exits | dogfood bridge |
+| Service | Role | Local | Remote |
+|---------|------|-------|--------|
+| **css** | Community Solid Server — Pod storage, WebID, OIDC tokens | Yes | No |
+| **openclaw-local** | AI agent runtime — shares CSS network namespace | Yes | No |
+| **openclaw-remote** | AI agent runtime — own network, HTTPS to remote CSS | No | Yes |
+| **proxy-local** | Squid firewall — allows api.anthropic.com only | Yes | No |
+| **proxy-remote** | Squid firewall — allows api.anthropic.com + Solid server | No | Yes |
+| **init-volumes** | One-shot — sets uid 1000 ownership on named volumes | Yes | Yes |
 
 ## Security Hardening
 
-OpenClaw has known security issues (CVE-2026-25253, CVSS 8.8 RCE). The Docker setup applies these mitigations:
+OpenClaw has known security issues (CVE-2026-25253, CVSS 8.8 RCE). The Docker setup applies these mitigations in both modes:
 
 | Measure | Purpose |
 |---------|---------|
@@ -68,7 +105,7 @@ OpenClaw has known security issues (CVE-2026-25253, CVSS 8.8 RCE). The Docker se
 | `no-new-privileges` | Prevents privilege escalation |
 | `user: 1000:1000` | Runs as non-root |
 | `tmpfs` on `/tmp` and `~/.cache` | Writable temp dirs in memory only |
-| Squid proxy | Restricts outbound to `api.anthropic.com` only |
+| Squid proxy | Restricts outbound to allowed domains only |
 | `127.0.0.1:18789` port binding | Web UI accessible only from localhost |
 | No Docker socket mount | Container cannot control Docker |
 | No host filesystem mounts | Only named volumes + read-only skill dir |
@@ -78,28 +115,29 @@ OpenClaw has known security issues (CVE-2026-25253, CVSS 8.8 RCE). The Docker se
 
 ### 1. Clone and build OpenClaw
 
+Clone to a permanent location (not `/tmp`) so you can rebuild the image easily:
+
 ```bash
-cd /tmp
+cd /Users/paulworrall/Development
 git clone https://github.com/steinbergpeter/OpenClaw.git
 cd OpenClaw
 docker build -t openclaw:local .
 ```
 
-The image is ~2.8 GB. This takes a while.
+The image is ~2.8 GB. The first build takes a while; subsequent builds use cache.
 
-### 2. Build the CSS image
+If the `openclaw:local` image gets removed (e.g. by `docker system prune`), rebuild from this directory.
+
+### 2. Build the CSS image (local mode only)
 
 From the agent-interition root:
 
 ```bash
+ANTHROPIC_API_KEY=dummy INTERITION_PASSPHRASE=dummy \
 docker compose -f docker/docker-compose.dogfood.yml build css
 ```
 
-Note: Compose validates all env vars even when building a single service. If it complains about `ANTHROPIC_API_KEY`, pass a dummy value:
-
-```bash
-ANTHROPIC_API_KEY=dummy INTERITION_PASSPHRASE=dummy docker compose -f docker/docker-compose.dogfood.yml build css
-```
+Note: Compose validates all env vars even when building a single service, so dummy values are needed.
 
 ### 3. Build the Skill
 
@@ -119,12 +157,40 @@ Save this — you'll need it to authenticate with the Web UI.
 
 ### 5. Start the stack
 
+Template scripts are provided — copy and fill in your credentials:
+
 ```bash
+cp template-start-local.sh start-local.sh    # for local mode
+cp template-start-remote.sh start-remote.sh  # for remote mode
+# Edit the copied file with your actual API key, passphrase, and gateway token
+```
+
+The `start-*.sh` files are gitignored so your credentials won't be committed.
+
+**Local CSS:**
+
+```bash
+./start-local.sh
+# or manually:
 ANTHROPIC_API_KEY=sk-ant-... \
 INTERITION_PASSPHRASE=your-passphrase \
 OPENCLAW_GATEWAY_TOKEN=your-token \
-docker compose -f docker/docker-compose.dogfood.yml up
+docker compose -f docker/docker-compose.dogfood.yml --profile local up
 ```
+
+**Remote CSS (e.g. solidcommunity.net):**
+
+```bash
+./start-remote.sh
+# or manually:
+ANTHROPIC_API_KEY=sk-ant-... \
+INTERITION_PASSPHRASE=your-passphrase \
+OPENCLAW_GATEWAY_TOKEN=your-token \
+SOLID_SERVER_URL=https://solidcommunity.net \
+docker compose -f docker/docker-compose.dogfood.yml --profile remote up
+```
+
+To use a different remote Solid server, change `SOLID_SERVER_URL` and update the domain in `docker/squid-remote.conf`.
 
 ### 6. Access the Web UI
 
@@ -159,13 +225,17 @@ Talk to the OpenClaw agent through the Web UI:
 - `port: 18789` — gateway port
 - `allowInsecureAuth: true` — token-only auth, skips device pairing (required for Docker/HTTP)
 
-### docker/squid.conf
+### docker/squid.conf (local mode)
 
-Restricts all outbound traffic to `api.anthropic.com` on port 443 only. All other domains are blocked.
+Restricts all outbound traffic to `api.anthropic.com` on port 443 only.
+
+### docker/squid-remote.conf (remote mode)
+
+Allows `api.anthropic.com` and `solidcommunity.net` on port 443. Edit this file to allow a different Solid server domain.
 
 ### docker/entrypoint.sh
 
-CSS entrypoint. Supports optional `SAP_BASE_URL` env var for overriding the base URL (not used in the current setup — defaults to `http://localhost:3000`).
+CSS entrypoint. Supports optional `SAP_BASE_URL` env var for overriding the base URL (not used in local mode — defaults to `http://localhost:3000`).
 
 ## Gotchas We Hit
 
@@ -203,7 +273,7 @@ CSS entrypoint. Supports optional `SAP_BASE_URL` env var for overriding the base
 
 **Security note:** Acceptable here because the port is bound to `127.0.0.1` (localhost only) and the gateway token is still required.
 
-### 6. CSS WebID token validation (401 Unauthorized)
+### 6. CSS WebID token validation (401 Unauthorized) — local mode only
 
 **Problem:** CSS requires WebID URIs in tokens to be HTTPS or HTTP on localhost. When CSS was configured with base URL `http://css:3000`, it issued tokens with WebID `http://css:3000/alpha/profile/card#me`. CSS then rejected these tokens as insecure.
 
@@ -216,24 +286,31 @@ Expected: The webid claim to be an HTTPS URI or a localhost with port number HTT
 
 **Solution:** Use `network_mode: service:css` so OpenClaw shares CSS's network namespace. CSS keeps its default base URL of `http://localhost:3000`, OpenClaw reaches CSS at `localhost:3000`, and WebID tokens use `http://localhost:3000/...` which CSS accepts.
 
+**Note:** This issue does not apply to remote mode — remote CSS uses HTTPS, so WebID URIs are HTTPS and pass validation.
+
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `docker/docker-compose.dogfood.yml` | Orchestrates CSS, Squid proxy, init-volumes, and hardened OpenClaw |
+| `docker/docker-compose.dogfood.yml` | Orchestrates services with `local` and `remote` profiles |
 | `docker/openclaw-config.json` | OpenClaw gateway configuration (bind, port, auth) |
-| `docker/squid.conf` | Proxy whitelist (api.anthropic.com only) |
+| `docker/squid.conf` | Proxy whitelist for local mode (api.anthropic.com only) |
+| `docker/squid-remote.conf` | Proxy whitelist for remote mode (api.anthropic.com + Solid server) |
 | `docker/Dockerfile` | CSS image (reused from Phase 1) |
 | `docker/entrypoint.sh` | CSS entrypoint (supports optional SAP_BASE_URL) |
+| `template-start-local.sh` | Template startup script for local mode (copy to `start-local.sh` and fill in credentials) |
+| `template-start-remote.sh` | Template startup script for remote mode (copy to `start-remote.sh` and fill in credentials) |
 
 ## Tearing Down
 
 ```bash
-docker compose -f docker/docker-compose.dogfood.yml down
+docker compose -f docker/docker-compose.dogfood.yml --profile local down
+# or
+docker compose -f docker/docker-compose.dogfood.yml --profile remote down
 ```
 
 To also remove the named volumes (deletes all Pod data and OpenClaw state):
 
 ```bash
-docker compose -f docker/docker-compose.dogfood.yml down -v
+docker compose -f docker/docker-compose.dogfood.yml --profile local down -v
 ```

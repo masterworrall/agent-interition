@@ -8,3 +8,5 @@ coverage/
 .DS_Store
 *.log
 /skill/
+start-local.sh
+start-remote.sh

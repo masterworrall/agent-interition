@@ -1,30 +1,79 @@
-# Phase 3: Dogfooding — Hardened OpenClaw + CSS
+# Phase 3: Dogfooding — Hardened OpenClaw + Solid Server
 #
-# Security model:
+# Two modes via Docker Compose profiles:
+#
+#   LOCAL mode (--profile local):
+#     Runs CSS in a container. OpenClaw shares CSS's network namespace
+#     so it can reach CSS at localhost:3000 (required for WebID token
+#     validation — must be HTTPS or localhost HTTP).
+#
+#   REMOTE mode (--profile remote):
+#     No local CSS. OpenClaw connects to a remote CSS (e.g. solidcommunity.net)
+#     over HTTPS via the Squid proxy. Set SOLID_SERVER_URL to the remote URL.
+#
+# Security model (both modes):
 #   - OpenClaw runs read-only, non-root, all caps dropped
-#   - Outbound traffic restricted to api.anthropic.com via Squid proxy
-#   - CSS accessible only within the Docker network
+#   - Outbound traffic restricted via Squid proxy
 #   - No host filesystem mounts (only named volumes + read-only skill dir)
 #   - No Docker socket access
 #
-# Network model:
-#   OpenClaw shares CSS's network namespace (network_mode: service:css).
-#   This lets OpenClaw reach CSS at localhost:3000, which CSS requires
-#   for its WebID token validation (must be HTTPS or localhost HTTP).
-#   The Squid proxy runs on the same Docker bridge network, reachable
-#   from the shared namespace at proxy:3128.
-#
 # Usage:
-#   1. Build CSS:     docker compose -f docker/docker-compose.dogfood.yml build css
-#   2. Build OpenClaw: (see README — requires cloning openclaw repo first)
-#   3. Start:         ANTHROPIC_API_KEY=sk-... INTERITION_PASSPHRASE=... docker compose -f docker/docker-compose.dogfood.yml up
-#   4. Access UI:     http://localhost:18789
+#
+#   Local CSS:
+#     1. Build CSS:  ANTHROPIC_API_KEY=dummy INTERITION_PASSPHRASE=dummy \
+#                    docker compose -f docker/docker-compose.dogfood.yml build css
+#     2. Start:      ANTHROPIC_API_KEY=sk-... INTERITION_PASSPHRASE=... \
+#                    OPENCLAW_GATEWAY_TOKEN=... \
+#                    docker compose -f docker/docker-compose.dogfood.yml --profile local up
+#
+#   Remote CSS (e.g. solidcommunity.net):
+#     1. Start:      ANTHROPIC_API_KEY=sk-... INTERITION_PASSPHRASE=... \
+#                    OPENCLAW_GATEWAY_TOKEN=... \
+#                    SOLID_SERVER_URL=https://solidcommunity.net \
+#                    docker compose -f docker/docker-compose.dogfood.yml --profile remote up
+#
+#   Access UI:       http://localhost:18789
 #
 # IMPORTANT: Review this file before running. Nothing runs without One's approval.
 
+# ── Shared config for OpenClaw hardening ──────────────────────────
+x-openclaw-base: &openclaw-base
+  image: openclaw:local
+  read_only: true
+  security_opt:
+    - no-new-privileges
+  cap_drop:
+    - ALL
+  user: "1000:1000"
+  tmpfs:
+    - /tmp
+    - /home/node/.cache
+  volumes:
+    # Writable volumes for OpenClaw state
+    - openclaw-config:/home/node/.openclaw
+    # Writable volume for Solid credential storage
+    - interition-creds:/home/node/.interition
+    # OpenClaw config — gateway bind + auth settings
+    - ./openclaw-config.json:/home/node/.openclaw/openclaw.json:ro
+    # Our Skill — read-only
+    - ../skill/solid-agent-storage:/home/node/.openclaw/workspace/skills/solid-agent-storage:ro
+  environment: &openclaw-env
+    HOME: /home/node
+    TERM: xterm-256color
+    # LLM access — key provided at runtime, never in this file
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY}
+    # Credential encryption — passphrase provided at runtime
+    INTERITION_PASSPHRASE: ${INTERITION_PASSPHRASE:?Set INTERITION_PASSPHRASE}
+    # Gateway token — generated on first run
+    OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
+    # Force proxy for outbound HTTPS
+    HTTPS_PROXY: http://proxy:3128
+    HTTP_PROXY: http://proxy:3128
+
 services:
-  # ── Community Solid Server ──────────────────────────────────────
+  # ── Community Solid Server (local profile only) ───────────────────
   css:
+    profiles: ["local"]
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -41,14 +90,30 @@ services:
     networks:
       - dogfood
 
-  # ── Outbound Proxy (Squid) ─────────────────────────────────────
-  # Restricts OpenClaw's internet access to api.anthropic.com only
-  proxy:
+  # ── Outbound Proxy: local mode (Anthropic only) ──────────────────
+  proxy-local:
+    profiles: ["local"]
     image: ubuntu/squid:latest
+    container_name: proxy
     volumes:
       - ./squid.conf:/etc/squid/squid.conf:ro
     networks:
-      - dogfood
+      dogfood:
+        aliases:
+          - proxy
+    # No ports exposed to host
+
+  # ── Outbound Proxy: remote mode (Anthropic + Solid server) ───────
+  proxy-remote:
+    profiles: ["remote"]
+    image: ubuntu/squid:latest
+    container_name: proxy
+    volumes:
+      - ./squid-remote.conf:/etc/squid/squid.conf:ro
+    networks:
+      dogfood:
+        aliases:
+          - proxy
     # No ports exposed to host
 
   # ── Volume Init (sets ownership for non-root OpenClaw) ──────────
@@ -68,50 +133,42 @@ services:
     networks:
       - dogfood
 
-  # ── OpenClaw (Hardened) ─────────────────────────────────────────
-  openclaw:
-    image: openclaw:local
-    # Share CSS's network namespace — OpenClaw reaches CSS at localhost:3000
+  # ── OpenClaw: local mode ─────────────────────────────────────────
+  # Shares CSS's network namespace — reaches CSS at localhost:3000
+  openclaw-local:
+    <<: *openclaw-base
+    profiles: ["local"]
     network_mode: service:css
-    read_only: true
-    security_opt:
-      - no-new-privileges
-    cap_drop:
-      - ALL
-    user: "1000:1000"
-    tmpfs:
-      - /tmp
-      - /home/node/.cache
-    volumes:
-      # Writable volumes for OpenClaw state
-      - openclaw-config:/home/node/.openclaw
-      # Writable volume for Solid credential storage
-      - interition-creds:/home/node/.interition
-      # OpenClaw config — gateway bind + auth settings
-      - ./openclaw-config.json:/home/node/.openclaw/openclaw.json:ro
-      # Our Skill — read-only
-      - ../skill/solid-agent-storage:/home/node/.openclaw/workspace/skills/solid-agent-storage:ro
     environment:
-      HOME: /home/node
-      TERM: xterm-256color
-      # LLM access — key provided at runtime, never in this file
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY}
-      # Solid server — localhost because we share CSS's network namespace
+      <<: *openclaw-env
       SOLID_SERVER_URL: http://localhost:3000
-      # Credential encryption — passphrase provided at runtime
-      INTERITION_PASSPHRASE: ${INTERITION_PASSPHRASE:?Set INTERITION_PASSPHRASE}
-      # Gateway token — generated on first run
-      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
-      # Force proxy for outbound HTTPS
-      HTTPS_PROXY: http://proxy:3128
-      HTTP_PROXY: http://proxy:3128
       NO_PROXY: localhost,127.0.0.1
     depends_on:
       init-volumes:
         condition: service_completed_successfully
       css:
         condition: service_started
-      proxy:
+      proxy-local:
+        condition: service_started
+
+  # ── OpenClaw: remote mode ────────────────────────────────────────
+  # Own network — reaches remote CSS over HTTPS via Squid proxy
+  openclaw-remote:
+    <<: *openclaw-base
+    profiles: ["remote"]
+    ports:
+      # Web UI — localhost bound
+      - "127.0.0.1:18789:18789"
+    networks:
+      - dogfood
+    environment:
+      <<: *openclaw-env
+      SOLID_SERVER_URL: ${SOLID_SERVER_URL:-}
+      NO_PROXY: localhost,127.0.0.1
+    depends_on:
+      init-volumes:
+        condition: service_completed_successfully
+      proxy-remote:
         condition: service_started
 
 volumes:
