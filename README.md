@@ -232,7 +232,8 @@ agent-interition/
 ├── skill-src/             # OpenClaw Skill source (SKILL.md, scripts, docs)
 ├── scripts/               # Build scripts
 ├── css-config/            # Community Solid Server configuration
-├── docker/                # Dockerfile, docker-compose, entrypoint
+├── docker/                # Dockerfiles, compose (dev + dogfooding), entrypoint, proxy configs
+├── docs/                  # Strategy, tutorial, dogfooding setup guide
 └── tests/
     ├── bootstrap/         # Unit tests for provisioning
     ├── sharing/           # Unit tests for ACL management
@@ -259,10 +260,13 @@ agent-interition/
 - [x] Submit to ClawHub
 - [x] Tutorial: "Give your agents memory with Solid"
 
-**Phase 3: Dogfooding**
+**Phase 3: Dogfooding** — In Progress
 
-- [ ] Set up hardened OpenClaw instance
-- [ ] Install Skill from ClawHub and validate end-to-end
+- [x] Hardened OpenClaw Docker setup (read-only, non-root, cap-drop ALL, Squid proxy)
+- [x] Local CSS profile (shared network namespace)
+- [x] Remote CSS profile (e.g. solidcommunity.net over HTTPS)
+- [x] Skill validated end-to-end (provision, read, write, share)
+- [ ] Document dogfooding findings and Skill improvements
 
 **Phase 4: Moltbook Integration**
 
@@ -273,6 +277,8 @@ agent-interition/
 ## Documentation
 
 - [Strategy & Architecture](docs/STRATEGY.md) — Full technical decisions and roadmap
+- [Dogfooding Setup](docs/dogfooding-setup.md) — Hardened OpenClaw + CSS Docker setup guide
+- [Tutorial](docs/tutorial.md) — "Give your agents memory with Solid"
 
 ## Contributing
 
