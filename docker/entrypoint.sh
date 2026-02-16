@@ -3,15 +3,23 @@ set -e
 
 PORT="${SAP_PORT:-3000}"
 DATA_DIR="${SAP_DATA_DIR:-/data}"
+BASE_URL="${SAP_BASE_URL:-}"
 
 echo "[entrypoint] Starting Community Solid Server on port ${PORT}..."
+
+# Build base URL flag if set (needed when CSS is accessed via Docker service name)
+BASE_URL_FLAG=""
+if [ -n "${BASE_URL}" ]; then
+  BASE_URL_FLAG="-b ${BASE_URL}"
+  echo "[entrypoint] Base URL: ${BASE_URL}"
+fi
 
 # Start CSS in the background
 npx community-solid-server \
   -c @css:config/file.json \
   -f "${DATA_DIR}" \
   --seedConfig css-config/seed.json \
-  -p "${PORT}" &
+  -p "${PORT}" ${BASE_URL_FLAG} &
 
 CSS_PID=$!
 

@@ -1,0 +1,124 @@
+# Phase 3: Dogfooding — Hardened OpenClaw + CSS
+#
+# Security model:
+#   - OpenClaw runs read-only, non-root, all caps dropped
+#   - Outbound traffic restricted to api.anthropic.com via Squid proxy
+#   - CSS accessible only within the Docker network
+#   - No host filesystem mounts (only named volumes + read-only skill dir)
+#   - No Docker socket access
+#
+# Network model:
+#   OpenClaw shares CSS's network namespace (network_mode: service:css).
+#   This lets OpenClaw reach CSS at localhost:3000, which CSS requires
+#   for its WebID token validation (must be HTTPS or localhost HTTP).
+#   The Squid proxy runs on the same Docker bridge network, reachable
+#   from the shared namespace at proxy:3128.
+#
+# Usage:
+#   1. Build CSS:     docker compose -f docker/docker-compose.dogfood.yml build css
+#   2. Build OpenClaw: (see README — requires cloning openclaw repo first)
+#   3. Start:         ANTHROPIC_API_KEY=sk-... INTERITION_PASSPHRASE=... docker compose -f docker/docker-compose.dogfood.yml up
+#   4. Access UI:     http://localhost:18789
+#
+# IMPORTANT: Review this file before running. Nothing runs without One's approval.
+
+services:
+  # ── Community Solid Server ──────────────────────────────────────
+  css:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - css-data:/data
+    environment:
+      SAP_PORT: 3000
+      SAP_DATA_DIR: /data
+      # No SAP_BASE_URL — defaults to http://localhost:3000, which is
+      # required for CSS to accept WebID tokens (must be HTTPS or localhost)
+    ports:
+      # OpenClaw gateway — exposed via shared network namespace
+      - "127.0.0.1:18789:18789"
+    networks:
+      - dogfood
+
+  # ── Outbound Proxy (Squid) ─────────────────────────────────────
+  # Restricts OpenClaw's internet access to api.anthropic.com only
+  proxy:
+    image: ubuntu/squid:latest
+    volumes:
+      - ./squid.conf:/etc/squid/squid.conf:ro
+    networks:
+      - dogfood
+    # No ports exposed to host
+
+  # ── Volume Init (sets ownership for non-root OpenClaw) ──────────
+  # Runs once, sets uid 1000 on named volumes, then exits
+  init-volumes:
+    image: openclaw:local
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mkdir -p /home/node/.openclaw/workspace/skills
+        chown -R 1000:1000 /home/node/.openclaw /home/node/.interition
+        echo "[init] Volume permissions set for uid 1000"
+    volumes:
+      - openclaw-config:/home/node/.openclaw
+      - interition-creds:/home/node/.interition
+    networks:
+      - dogfood
+
+  # ── OpenClaw (Hardened) ─────────────────────────────────────────
+  openclaw:
+    image: openclaw:local
+    # Share CSS's network namespace — OpenClaw reaches CSS at localhost:3000
+    network_mode: service:css
+    read_only: true
+    security_opt:
+      - no-new-privileges
+    cap_drop:
+      - ALL
+    user: "1000:1000"
+    tmpfs:
+      - /tmp
+      - /home/node/.cache
+    volumes:
+      # Writable volumes for OpenClaw state
+      - openclaw-config:/home/node/.openclaw
+      # Writable volume for Solid credential storage
+      - interition-creds:/home/node/.interition
+      # OpenClaw config — gateway bind + auth settings
+      - ./openclaw-config.json:/home/node/.openclaw/openclaw.json:ro
+      # Our Skill — read-only
+      - ../skill/solid-agent-storage:/home/node/.openclaw/workspace/skills/solid-agent-storage:ro
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      # LLM access — key provided at runtime, never in this file
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY}
+      # Solid server — localhost because we share CSS's network namespace
+      SOLID_SERVER_URL: http://localhost:3000
+      # Credential encryption — passphrase provided at runtime
+      INTERITION_PASSPHRASE: ${INTERITION_PASSPHRASE:?Set INTERITION_PASSPHRASE}
+      # Gateway token — generated on first run
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
+      # Force proxy for outbound HTTPS
+      HTTPS_PROXY: http://proxy:3128
+      HTTP_PROXY: http://proxy:3128
+      NO_PROXY: localhost,127.0.0.1
+    depends_on:
+      init-volumes:
+        condition: service_completed_successfully
+      css:
+        condition: service_started
+      proxy:
+        condition: service_started
+
+volumes:
+  css-data:
+  openclaw-config:
+  interition-creds:
+
+networks:
+  dogfood:
+    driver: bridge

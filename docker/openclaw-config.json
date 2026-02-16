@@ -1,0 +1,9 @@
+{
+  "gateway": {
+    "bind": "lan",
+    "port": 18789,
+    "controlUi": {
+      "allowInsecureAuth": true
+    }
+  }
+}
