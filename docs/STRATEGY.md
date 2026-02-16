@@ -509,7 +509,7 @@ The strategy diagrams show pods at `/agents/{name}/`, but CSS v7 creates pods at
 - [x] SKILL.md, SECURITY.md, reference docs
 - [x] Build script (`npm run skill:build`)
 - [x] End-to-end tested against live CSS
-- [ ] Submit to ClawHub (eligible 2026-02-22)
+- [ ] Submit to ClawHub
 - [x] Tutorial: "Give your agents memory with Solid"
 
 ### Phase 3: Dogfooding

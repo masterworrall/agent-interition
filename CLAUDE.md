@@ -180,7 +180,7 @@ agent-interition/
 - [x] Reference docs (Solid primer, troubleshooting)
 - [x] Build script (`npm run skill:build`)
 - [x] Skill package validation tests
-- [ ] Submit to ClawHub (eligible 2026-02-22)
+- [ ] Submit to ClawHub
 - [x] Tutorial: "Give your agents memory with Solid"
 
 ### Phase 3: Dogfooding
