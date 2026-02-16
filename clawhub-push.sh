@@ -1,0 +1,1 @@
+clawhub publish ./skill/solid-agent-storage --slug solid-agent-storage --name "Solid Agent Storage" --version 0.1.1 --changelog "Fix security claims: clarify configurable server target, clarify CSS prerequisite, strip source maps" --tags latest
