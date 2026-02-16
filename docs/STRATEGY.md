@@ -509,25 +509,25 @@ The strategy diagrams show pods at `/agents/{name}/`, but CSS v7 creates pods at
 - [x] SKILL.md, SECURITY.md, reference docs
 - [x] Build script (`npm run skill:build`)
 - [x] End-to-end tested against live CSS
-- [ ] Submit to ClawHub
+- [x] Submit to ClawHub (v0.1.0 submitted 2026-02-16, v0.1.1 with validation fixes)
 - [x] Tutorial: "Give your agents memory with Solid"
 
 ### Phase 3: Dogfooding
 
-**Goal:** Validate the Skill works end-to-end by running it ourselves with a real OpenClaw instance
+**Goal:** Validate the Skill works end-to-end by installing from ClawHub and running with a real OpenClaw instance
 
 - [ ] Set up hardened OpenClaw instance
   - [ ] Docker deployment, bind to localhost only
   - [ ] Minimal permissions, scoped tokens
   - [ ] Patched against CVE-2026-25253
   - [ ] "Ask before executing" mode enabled
-- [ ] Install Solid Agent Storage Skill into OpenClaw
+- [ ] Install Solid Agent Storage Skill from ClawHub
 - [ ] Validate full user journey
   - [ ] Agent provisions itself a Pod autonomously
   - [ ] Agent stores and retrieves data across sessions
   - [ ] Multi-agent sharing scenario (grant/revoke access)
 - [ ] Document findings — what works, what's rough, what needs fixing
-- [ ] Submit to ClawHub (after dogfooding confirms readiness)
+- [ ] Feed findings back into Skill and publish updates to ClawHub
 
 ### Phase 4: Moltbook Integration
 

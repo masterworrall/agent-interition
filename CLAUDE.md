@@ -180,14 +180,14 @@ agent-interition/
 - [x] Reference docs (Solid primer, troubleshooting)
 - [x] Build script (`npm run skill:build`)
 - [x] Skill package validation tests
-- [ ] Submit to ClawHub
+- [x] Submit to ClawHub
 - [x] Tutorial: "Give your agents memory with Solid"
 
 ### Phase 3: Dogfooding
 - [ ] Set up hardened OpenClaw instance (localhost-only, Docker, scoped tokens)
-- [ ] Install Solid Agent Storage Skill
+- [ ] Install Solid Agent Storage Skill from ClawHub
 - [ ] Validate full user journey from OpenClaw's perspective
-- [ ] Submit to ClawHub
+- [ ] Feed findings back into Skill (iterate on ClawHub)
 
 ### Phase 4: Moltbook Integration
 - [ ] Moltbook Bridge Skill

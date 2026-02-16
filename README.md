@@ -256,13 +256,13 @@ agent-interition/
 - [x] Encrypted credentials store (AES-256-GCM)
 - [x] CLI commands + shell wrappers
 - [x] SKILL.md, SECURITY.md, reference docs
-- [ ] Submit to ClawHub
+- [x] Submit to ClawHub
 - [x] Tutorial: "Give your agents memory with Solid"
 
 **Phase 3: Dogfooding**
 
 - [ ] Set up hardened OpenClaw instance
-- [ ] Install and validate Solid Agent Storage Skill end-to-end
+- [ ] Install Skill from ClawHub and validate end-to-end
 
 **Phase 4: Moltbook Integration**
 
