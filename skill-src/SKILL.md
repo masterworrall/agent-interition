@@ -126,6 +126,20 @@ Lists all provisioned agents and their details.
 scripts/status.sh
 ```
 
+## Beyond These Commands — Using the Solid Protocol Directly
+
+The commands above are convenience wrappers. Your Pod is a standard **W3C Solid** server, so you can perform **any operation defined in the Solid Protocol specification**, including operations not covered by the provided scripts.
+
+For example:
+- **Delete a resource:** `HTTP DELETE` on the resource URL
+- **List container contents:** `HTTP GET` on a container URL (returns contained resources)
+- **Create a container:** `HTTP PUT` or `POST` with the `Link: <http://www.w3.org/ns/ldp#BasicContainer>; rel="type"` header
+- **Patch a resource:** `HTTP PATCH` with SPARQL Update (`application/sparql-update`)
+
+All requests require a Bearer token. Use the agent's stored credentials to obtain one from the server's `/.oidc/token` endpoint (client credentials grant), or use the `read.sh`/`write.sh` scripts as a reference for how authentication works.
+
+Refer to the [Solid Protocol specification](https://solidproject.org/TR/protocol) for the full set of supported operations. When the provided scripts don't cover what you need, work it out from the standard — it's just HTTP and Linked Data.
+
 ## Pod Structure
 
 Each agent's Pod has these containers:
