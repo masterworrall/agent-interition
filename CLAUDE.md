@@ -181,11 +181,11 @@ agent-interition/
 - [x] Submit to ClawHub
 - [x] Tutorial: "Give your agents memory with Solid"
 
-### Phase 3: Dogfooding
-- [ ] Set up hardened OpenClaw instance (localhost-only, Docker, scoped tokens)
-- [ ] Install Solid Agent Storage Skill from ClawHub
-- [ ] Validate full user journey from OpenClaw's perspective
-- [ ] Feed findings back into Skill (iterate on ClawHub)
+### Phase 3: Dogfooding (Complete)
+- [x] Set up hardened OpenClaw instance (localhost-only, Docker, scoped tokens)
+- [x] Install Solid Agent Storage Skill from ClawHub
+- [x] Validate full user journey from OpenClaw's perspective
+- [x] Feed findings back into Skill and README
 
 ### Phase 4: Moltbook Integration
 - [ ] Moltbook Bridge Skill

@@ -14,6 +14,8 @@ The agent is your OpenClaw instance. The WebID and Pod are infrastructure the ag
 
 ## How It Works
 
+For clarity we use a Docker architecture with OpenClaw and the Community Solid Server (CSS). For local testing the Docker configuration has both OpenClaw and CSS. This configuration is limited to local use. A second configuration is provided for use of an external CSS instance. The external CSS instance configuration is necessary if you want to share information with agents elsewhere.
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Docker                                                      │
@@ -35,7 +37,7 @@ The agent is your OpenClaw instance. The WebID and Pod are infrastructure the ag
 
 A [Community Solid Server](https://github.com/CommunitySolidServer/CommunitySolidServer) (CSS) runs in Docker alongside OpenClaw. The Skill gives OpenClaw shell scripts to provision agents and get auth tokens. OpenClaw then uses standard HTTP (`curl`) with Bearer tokens for all Solid operations — reading, writing, deleting, and sharing data.
 
-Two Docker profiles are available:
+Docker profiles are available for local and remote CSS use:
 - **Local mode** — runs CSS alongside OpenClaw in a shared network namespace
 - **Remote mode** — connects OpenClaw to an external CSS (e.g. `solidcommunity.net`) over HTTPS
 
@@ -46,8 +48,10 @@ See the [Dogfooding Setup Guide](docs/dogfooding-setup.md) for the full architec
 ### Prerequisites
 
 - Docker Desktop
-- An Anthropic API key (set a hard spend limit — we used $5)
+- An Anthropic API key (see note on API costs below)
 - Node.js 20+ (to build the Skill)
+
+> **A note on API costs.** OpenClaw consumes significantly more API credits per interaction than other clients like Claude Code. During dogfooding we observed costs roughly 3–5x higher for equivalent tasks. We are investigating this with the OpenClaw community — it may relate to how OpenClaw manages context windows or tool-use loops. In the meantime, **set a hard spend limit** in the Anthropic console before starting. We used $5, which was sufficient for initial testing.
 
 ### 1. Build the Skill
 
@@ -58,33 +62,45 @@ npm run skill:build
 
 Output goes to `skill/solid-agent-storage/`. This directory is mounted read-only into the OpenClaw container.
 
-### 2. Build the Docker images
+### 2. Build the OpenClaw Docker image
+
+Clone [OpenClaw](https://github.com/steinbergpeter/OpenClaw) and build its Docker image. Use a permanent location — you'll need the source directory to rebuild if the image gets pruned.
 
 ```bash
-# Build the OpenClaw image (from wherever you cloned OpenClaw)
-cd /path/to/OpenClaw
+git clone https://github.com/steinbergpeter/OpenClaw.git
+cd OpenClaw
 docker build -t openclaw:local .
+```
 
-# Build the CSS image (from agent-interition root)
+The image is ~2.8 GB. The first build takes a while; subsequent builds use cache.
+
+### 3. Build the CSS Docker image
+
+Back in the agent-interition directory (local mode only):
+
+```bash
 ANTHROPIC_API_KEY=dummy INTERITION_PASSPHRASE=dummy \
 docker compose -f docker/docker-compose.dogfood.yml build css
 ```
 
-### 3. Start the stack
+Note: Compose validates all env vars even when building a single service, so dummy values are needed here.
+
+### 4. Start the stack
 
 Copy a template startup script and fill in your credentials:
 
 ```bash
 cp template-start-local.sh start-local.sh    # for local mode
 cp template-start-remote.sh start-remote.sh  # for remote mode
-# Edit the copied file with your API key, passphrase, and gateway token
 ```
 
-Generate a gateway token:
+Edit the copied file and set three values:
 
-```bash
-openssl rand -hex 32
-```
+| Variable | What it is |
+|----------|-----------|
+| `ANTHROPIC_API_KEY` | Your Anthropic API key (OpenClaw uses Claude as its LLM) |
+| `INTERITION_PASSPHRASE` | Encrypts stored agent credentials (AES-256-GCM). Choose something strong and keep it secret. |
+| `OPENCLAW_GATEWAY_TOKEN` | A shared secret that protects the Web UI. Generate one with `openssl rand -hex 32`. You'll paste this into the browser when you connect. |
 
 Then start:
 
@@ -94,11 +110,11 @@ Then start:
 ./start-remote.sh  # Remote CSS (e.g. solidcommunity.net)
 ```
 
-### 4. Open the Web UI
+### 5. Open the Web UI
 
-Go to `http://localhost:18789` in your browser. Enter the gateway token when prompted.
+Go to `http://localhost:18789` in your browser. Enter your gateway token when prompted — this is the `OPENCLAW_GATEWAY_TOKEN` you set in the start script.
 
-### 5. Talk to your agent
+### 6. Talk to your agent
 
 Ask OpenClaw to use the Skill:
 
@@ -113,12 +129,12 @@ OpenClaw reads the Skill's instructions and figures out which scripts to run and
 
 Once the Skill is installed, OpenClaw can:
 
-- **Provision agents** — create a WebID, Pod, and credentials for a named agent
-- **Deprovision agents** — fully tear down an agent's CSS account and local credentials
-- **Store and retrieve data** — write Turtle (RDF) or any content to the agent's Pod, read it back
+- **Provision an Identity and a Store for itself** — create a WebID, Pod, and credentials for a named agent
+- **Deprovision Identities and Store** — fully tear down an agent's CSS account and local credentials
+- **Store and retrieve data** — write Turtle (RDF) or any content to Pods and read it back
 - **Share data** — grant another agent read or write access to specific resources using WAC
 - **Revoke access** — remove previously granted permissions
-- **Check status** — list all provisioned agents and their details
+- **Check status** — list all provisioned WebId and their Pods
 
 OpenClaw reads `SKILL.md` and the reference docs bundled in the Skill package. It uses the management scripts for provisioning/deprovisioning, gets Bearer tokens via the token helper, and uses `curl` for all standard Solid operations. See `references/solid-http-reference.md` in the Skill package for the full set of operations including containers, SPARQL PATCH, and WAC access control.
 
@@ -159,7 +175,7 @@ See [Dogfooding Setup Guide](docs/dogfooding-setup.md) for full details.
 - [x] Submit to ClawHub
 - [x] Tutorial: "Give your agents memory with Solid"
 
-**Phase 3: Dogfooding** — In Progress
+**Phase 3: Dogfooding** — Complete
 
 - [x] Hardened OpenClaw Docker setup (read-only, non-root, cap-drop ALL, Squid proxy)
 - [x] Local CSS profile (shared network namespace)
@@ -167,8 +183,8 @@ See [Dogfooding Setup Guide](docs/dogfooding-setup.md) for full details.
 - [x] Deprovision feature (full CSS account teardown with graceful degradation)
 - [x] Replace CRUD scripts with token helper + curl workflow
 - [x] Solid HTTP reference doc for OpenClaw
-- [ ] Complete dogfood test plan (token-curl-test-plan.md)
-- [ ] Feed remaining findings back into Skill
+- [x] Complete dogfood test plan (token-curl-test-plan.md)
+- [x] Feed findings back into Skill and README
 
 **Phase 4: Moltbook Integration**
 
