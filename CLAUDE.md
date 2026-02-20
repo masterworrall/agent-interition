@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Team Member Identity
 
 **Name:** Two
-**Role:** Agent Infrastructure Lead
+**Role:** Chief of R&D
 **Organisation:** Interition
 **Reports to:** Seven (CTO)
 
@@ -137,18 +137,16 @@ agent-interition/
 │   │   ├── credentials-store.ts  # AES-256-GCM encrypted credential storage
 │   │   ├── args.ts        # Shared argument parsing
 │   │   ├── provision.ts   # Provision agent → save credentials
-│   │   ├── read.ts        # Read resource from Pod
-│   │   ├── write.ts       # Write data to Pod
-│   │   ├── grant-access.ts # Grant WAC access
-│   │   ├── revoke-access.ts # Revoke WAC access
+│   │   ├── deprovision.ts # Deprovision agent → remove credentials + CSS account
+│   │   ├── get-token.ts   # Get Bearer token for Solid HTTP requests
 │   │   └── status.ts      # List provisioned agents
 │   ├── demo/              # Two-agent sharing demo
 │   └── training/          # Step-by-step training scripts
 ├── skill-src/             # OpenClaw Skill package source
 │   ├── SKILL.md           # Skill instructions (YAML frontmatter + markdown)
 │   ├── SECURITY.md        # Security manifest for ClawHub
-│   ├── scripts/           # Shell wrappers (provision.sh, read.sh, etc.)
-│   └── references/        # Solid primer, troubleshooting guide
+│   ├── scripts/           # Shell wrappers (provision.sh, get-token.sh, etc.)
+│   └── references/        # Solid HTTP reference, primer, troubleshooting
 ├── scripts/
 │   └── build-skill.js     # Assembles skill/ from dist/ + skill-src/
 ├── skill/                 # Build output (gitignored)
@@ -205,6 +203,7 @@ Interition is building tools that embody Solid principles. This project is a str
 
 Other team members:
 - One (Paul Worrall) - CEO
+- Six - Chief of Staff
 - Seven - CTO
 - Ten - COO
 - Eleven - CCO

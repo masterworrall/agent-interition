@@ -25,11 +25,17 @@ export INTERITION_PASSPHRASE="your-passphrase-here"
 
 **Fix:** Use the same passphrase that was set when `provision.sh` was first run. If you've lost the passphrase, you'll need to re-provision the agent (which creates a new WebID and Pod).
 
-### "HTTP 401 Unauthorized"
+### "Token request failed: 401"
 
-**Cause:** The agent's access token has expired or the client credentials are invalid.
+**Cause:** The client credentials stored for this agent are invalid or the CSS server has been reset.
 
-**Fix:** Client credentials don't expire, but the access token is refreshed automatically. If this persists, re-provision the agent.
+**Fix:** Re-provision the agent with `scripts/provision.sh --name <agent-name>`.
+
+### Expired token (HTTP 401 on curl requests)
+
+**Cause:** The Bearer token has expired. Tokens last 600 seconds (10 minutes).
+
+**Fix:** Run `scripts/get-token.sh --agent <name>` to get a fresh token. As a rule of thumb, re-fetch if more than 8 minutes have elapsed since your last token request.
 
 ### "HTTP 404 Not Found"
 
@@ -44,7 +50,7 @@ export INTERITION_PASSPHRASE="your-passphrase-here"
 
 **Cause:** Trying to create a resource that already exists, or a naming conflict.
 
-**Fix:** Use PUT (write command) to overwrite, or choose a different URL.
+**Fix:** Use PUT to overwrite, or choose a different URL.
 
 ### "ECONNREFUSED"
 
@@ -65,10 +71,23 @@ If writing Turtle data and getting 400 errors, check:
 - URIs are wrapped in `<angle-brackets>`
 - Strings are wrapped in `"double-quotes"`
 
-### Content type mismatch
+### Content-Type missing or wrong on curl requests
 
-When writing data, ensure `--content-type` matches the actual data format:
-- Turtle: `text/turtle`
-- Plain text: `text/plain`
-- JSON: `application/json`
-- JSON-LD: `application/ld+json`
+The server rejects PUT and PATCH requests without a `Content-Type` header. Always include one:
+- Turtle: `-H "Content-Type: text/turtle"`
+- Plain text: `-H "Content-Type: text/plain"`
+- JSON: `-H "Content-Type: application/json"`
+- JSON-LD: `-H "Content-Type: application/ld+json"`
+- SPARQL Update: `-H "Content-Type: application/sparql-update"`
+
+### Missing trailing slash on container URLs
+
+Container URLs **must** end with `/`. If you GET or PUT to a container path without a trailing slash, you'll get unexpected results (404 or creating a resource instead of a container).
+
+```bash
+# Wrong — this is a resource URL
+curl -s -H "Authorization: Bearer $TOKEN" "${POD_URL}memory"
+
+# Correct — this is a container URL
+curl -s -H "Authorization: Bearer $TOKEN" "${POD_URL}memory/"
+```

@@ -1,10 +1,10 @@
 ---
 name: solid-agent-storage
 description: Give your AI agent persistent identity (WebID) and personal data storage (Pod) using the Solid Protocol
-version: 0.1.3
+version: 0.2.0
 author: Interition
 license: Apache-2.0
-metadata: {"requires": {"bins": ["node", "docker"], "env": ["SOLID_SERVER_URL", "INTERITION_PASSPHRASE"]}, "categories": ["storage", "identity", "data"], "homepage": "https://github.com/masterworrall/agent-interition"}
+metadata: {"requires": {"bins": ["node", "docker", "curl"], "env": ["SOLID_SERVER_URL", "INTERITION_PASSPHRASE"]}, "categories": ["storage", "identity", "data"], "homepage": "https://github.com/masterworrall/agent-interition"}
 ---
 
 # Solid Agent Storage
@@ -27,7 +27,62 @@ Before using any commands, ensure:
 2. `SOLID_SERVER_URL` is set to your server's URL (default: `http://localhost:3000`). **Only point this at a server you control and trust** — the Skill will exchange credentials with it.
 3. `INTERITION_PASSPHRASE` is set (used to encrypt stored credentials). Use a strong passphrase and keep it secret.
 
-## Commands
+## How It Works
+
+This Skill provides **three management scripts** for CSS-specific operations (provisioning, deprovisioning, status) plus a **token helper** for authentication. All standard Solid operations (read, write, delete, share) are done with **curl and a Bearer token** — your Pod is a standard W3C Solid server.
+
+### Two-Step Workflow
+
+**Step 1:** Get a token:
+```bash
+scripts/get-token.sh --agent <name>
+```
+
+Output:
+```json
+{"token": "eyJhbG...", "expiresIn": 600, "serverUrl": "http://localhost:3000", "podUrl": "http://localhost:3000/agents/researcher/", "webId": "http://localhost:3000/agents/researcher/profile/card#me"}
+```
+
+**Step 2:** Use curl with `Authorization: Bearer $TOKEN` for any Solid operation.
+
+### Token Expiry
+
+Tokens last **600 seconds** (10 minutes). If more than **8 minutes** have elapsed since your last `get-token.sh` call, fetch a new token before making requests.
+
+## Quick Reference
+
+Extract token and URLs:
+```bash
+TOKEN_JSON=$(scripts/get-token.sh --agent researcher)
+TOKEN=$(echo "$TOKEN_JSON" | jq -r '.token')
+POD_URL=$(echo "$TOKEN_JSON" | jq -r '.podUrl')
+```
+
+**Read a resource:**
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" "${POD_URL}memory/notes.ttl"
+```
+
+**Write a resource:**
+```bash
+curl -s -X PUT \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: text/turtle" \
+  -d '@prefix schema: <http://schema.org/>.
+<#note-1> a schema:Note;
+  schema:text "Important finding";
+  schema:dateCreated "2024-01-15".' \
+  "${POD_URL}memory/notes.ttl"
+```
+
+**Delete a resource:**
+```bash
+curl -s -X DELETE -H "Authorization: Bearer $TOKEN" "${POD_URL}memory/old.ttl"
+```
+
+For the full set of operations (containers, PATCH, access control, public access), see `references/solid-http-reference.md`.
+
+## Management Commands
 
 ### Provision a New Agent
 
@@ -47,76 +102,33 @@ scripts/provision.sh --name researcher --displayName "Research Assistant"
 {"status": "ok", "agent": "researcher", "webId": "http://localhost:3000/agents/researcher/profile/card#me", "podUrl": "http://localhost:3000/agents/researcher/"}
 ```
 
-### Write Data to Pod
+### Deprovision an Agent
 
-Stores data at a URL within the agent's Pod.
-
-```bash
-scripts/write.sh --agent <name> --url <resource-url> --content <data> [--content-type <mime-type>]
-```
-
-**Example — store a note:**
-```bash
-scripts/write.sh --agent researcher \
-  --url "http://localhost:3000/agents/researcher/memory/notes.ttl" \
-  --content '@prefix schema: <http://schema.org/>.
-<#meeting-2024-01> a schema:Note;
-  schema:text "User prefers bullet-point summaries";
-  schema:dateCreated "2024-01-15".' \
-  --content-type "text/turtle"
-```
-
-**Example — store plain text:**
-```bash
-scripts/write.sh --agent researcher \
-  --url "http://localhost:3000/agents/researcher/memory/summary.txt" \
-  --content "Key finding: the API rate limit is 100 req/min" \
-  --content-type "text/plain"
-```
-
-### Read Data from Pod
-
-Retrieves data from a URL.
+Fully removes an agent: deletes its pods, client credentials, WebID links, and password logins from the CSS server, then deletes local credential files.
 
 ```bash
-scripts/read.sh --agent <name> --url <resource-url>
+scripts/deprovision.sh --name <agent-name>
 ```
 
 **Example:**
 ```bash
-scripts/read.sh --agent researcher --url "http://localhost:3000/agents/researcher/memory/notes.ttl"
+scripts/deprovision.sh --name researcher
 ```
 
-**Output:**
+**Output (success):**
 ```json
-{"status": "ok", "url": "...", "contentType": "text/turtle", "body": "..."}
+{"status": "ok", "agent": "researcher", "accountDeleted": true, "credentialsDeleted": true}
 ```
 
-### Grant Access to Another Agent
-
-Allows another agent to read or write a specific resource.
-
-```bash
-scripts/grant-access.sh --agent <owner-name> --resource <url> --grantee <webId> --modes <Read,Write,...>
+**Output (partial — e.g. server unreachable):**
+```json
+{"status": "partial", "agent": "researcher", "accountDeleted": false, "credentialsDeleted": true, "warnings": ["Could not delete CSS account: ..."]}
 ```
 
-**Valid modes:** `Read`, `Write`, `Append`, `Control`
+- `status: "ok"` — CSS account fully dismantled and local files deleted
+- `status: "partial"` — local files deleted but CSS cleanup failed (see warnings)
 
-**Example — let another agent read your notes:**
-```bash
-scripts/grant-access.sh --agent researcher \
-  --resource "http://localhost:3000/agents/researcher/shared/report.ttl" \
-  --grantee "http://localhost:3000/agents/writer/profile/card#me" \
-  --modes "Read"
-```
-
-### Revoke Access
-
-Removes a previously granted access rule.
-
-```bash
-scripts/revoke-access.sh --agent <owner-name> --resource <url> --grantee <webId>
-```
+If the agent was provisioned before email/password storage was added, CSS cleanup is skipped and a warning explains why.
 
 ### Check Status
 
@@ -125,20 +137,6 @@ Lists all provisioned agents and their details.
 ```bash
 scripts/status.sh
 ```
-
-## Beyond These Commands — Using the Solid Protocol Directly
-
-The commands above are convenience wrappers. Your Pod is a standard **W3C Solid** server, so you can perform **any operation defined in the Solid Protocol specification**, including operations not covered by the provided scripts.
-
-For example:
-- **Delete a resource:** `HTTP DELETE` on the resource URL
-- **List container contents:** `HTTP GET` on a container URL (returns contained resources)
-- **Create a container:** `HTTP PUT` or `POST` with the `Link: <http://www.w3.org/ns/ldp#BasicContainer>; rel="type"` header
-- **Patch a resource:** `HTTP PATCH` with SPARQL Update (`application/sparql-update`)
-
-All requests require a Bearer token. Use the agent's stored credentials to obtain one from the server's `/.oidc/token` endpoint (client credentials grant), or use the `read.sh`/`write.sh` scripts as a reference for how authentication works.
-
-Refer to the [Solid Protocol specification](https://solidproject.org/TR/protocol) for the full set of supported operations. When the provided scripts don't cover what you need, work it out from the standard — it's just HTTP and Linked Data.
 
 ## Pod Structure
 
@@ -182,7 +180,7 @@ When storing structured data, use Turtle (RDF) format. Here are templates for co
 
 ## Error Handling
 
-All commands output JSON. On error, stderr will contain:
+All management commands output JSON. On error, stderr will contain:
 ```json
 {"error": "description of what went wrong"}
 ```
@@ -191,5 +189,5 @@ Common errors:
 - `"No passphrase provided"` — Set `INTERITION_PASSPHRASE` env var
 - `"No credentials found"` — Run `provision.sh` first
 - `"Invalid passphrase"` — Wrong `INTERITION_PASSPHRASE` value
-- `"HTTP 401"` — Credentials expired; re-provision the agent
+- `"Token request failed: 401"` — Credentials expired; re-provision the agent
 - `"HTTP 404"` — Resource doesn't exist at that URL

@@ -1,5 +1,5 @@
 import { randomBytes, createCipheriv, createDecipheriv, pbkdf2Sync } from 'node:crypto';
-import { mkdirSync, writeFileSync, readFileSync, readdirSync, chmodSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync, chmodSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 
@@ -8,6 +8,8 @@ export interface StoredCredentials {
   podUrl: string;
   id: string;
   secret: string;
+  email?: string;
+  password?: string;
 }
 
 interface EncryptedPayload {
@@ -118,6 +120,13 @@ export function loadCredentials(name: string): StoredCredentials {
   const payload: EncryptedPayload = JSON.parse(raw);
   const decrypted = decrypt(payload, passphrase);
   return JSON.parse(decrypted);
+}
+
+export function deleteAgentCredentials(name: string): void {
+  const agentDir = join(getStoreDir(), name);
+  if (existsSync(agentDir)) {
+    rmSync(agentDir, { recursive: true, force: true });
+  }
 }
 
 export function listAgents(): string[] {

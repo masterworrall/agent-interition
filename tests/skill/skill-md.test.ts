@@ -38,10 +38,24 @@ describe('SKILL.md validation', () => {
     expect(parsed.requires.bins).toContain('node');
     expect(parsed.requires.bins).toContain('docker');
   });
+
+  it('documents get-token workflow', () => {
+    expect(content).toContain('get-token.sh');
+    expect(content).toContain('Authorization: Bearer');
+  });
+
+  it('documents token expiry', () => {
+    expect(content).toContain('600 seconds');
+    expect(content).toContain('8 minutes');
+  });
+
+  it('references solid-http-reference.md', () => {
+    expect(content).toContain('references/solid-http-reference.md');
+  });
 });
 
 describe('Shell scripts reference existing JS files', () => {
-  const scripts = ['provision', 'read', 'write', 'grant-access', 'revoke-access', 'status'];
+  const scripts = ['provision', 'get-token', 'deprovision', 'status'];
 
   for (const script of scripts) {
     it(`${script}.sh references dist/cli/${script}.js`, () => {
@@ -54,18 +68,28 @@ describe('Shell scripts reference existing JS files', () => {
   }
 });
 
+describe('CRUD scripts are removed', () => {
+  const removedScripts = ['read', 'write', 'grant-access', 'revoke-access'];
+
+  for (const script of removedScripts) {
+    it(`${script}.sh does not exist`, () => {
+      const shPath = join(SKILL_SRC, 'scripts', `${script}.sh`);
+      expect(existsSync(shPath)).toBe(false);
+    });
+  }
+});
+
 describe('Required Skill files exist', () => {
   const requiredFiles = [
     'SKILL.md',
     'SECURITY.md',
     'scripts/provision.sh',
-    'scripts/read.sh',
-    'scripts/write.sh',
-    'scripts/grant-access.sh',
-    'scripts/revoke-access.sh',
+    'scripts/get-token.sh',
+    'scripts/deprovision.sh',
     'scripts/status.sh',
     'references/solid-primer.md',
     'references/troubleshooting.md',
+    'references/solid-http-reference.md',
   ];
 
   for (const file of requiredFiles) {

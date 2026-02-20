@@ -17,7 +17,7 @@ vi.mock('node:os', async () => {
 });
 
 // Import after mock setup
-const { initStore, saveCredentials, loadCredentials, listAgents } = await import(
+const { initStore, saveCredentials, loadCredentials, listAgents, deleteAgentCredentials } = await import(
   '../../src/cli/credentials-store.js'
 );
 
@@ -26,6 +26,8 @@ const testCreds = {
   podUrl: 'http://localhost:3000/agents/alpha/',
   id: 'test-client-id',
   secret: 'test-client-secret',
+  email: 'alpha@agents.interition.local',
+  password: 'agent-alpha-1234567890',
 };
 
 describe('credentials-store', () => {
@@ -83,5 +85,36 @@ describe('credentials-store', () => {
   it('throws when loading non-existent agent', () => {
     initStore('my-secret-passphrase');
     expect(() => loadCredentials('nonexistent')).toThrow('No credentials found');
+  });
+
+  it('loads legacy credentials without email/password as undefined', () => {
+    initStore('my-secret-passphrase');
+    const legacyCreds = {
+      webId: 'http://localhost:3000/agents/legacy/profile/card#me',
+      podUrl: 'http://localhost:3000/agents/legacy/',
+      id: 'legacy-id',
+      secret: 'legacy-secret',
+    };
+    saveCredentials('legacy', legacyCreds);
+
+    const loaded = loadCredentials('legacy');
+    expect(loaded.webId).toBe(legacyCreds.webId);
+    expect(loaded.id).toBe(legacyCreds.id);
+    expect(loaded.email).toBeUndefined();
+    expect(loaded.password).toBeUndefined();
+  });
+
+  it('deletes agent credentials directory', () => {
+    initStore('my-secret-passphrase');
+    saveCredentials('alpha', testCreds);
+
+    expect(listAgents()).toContain('alpha');
+    deleteAgentCredentials('alpha');
+    expect(listAgents()).not.toContain('alpha');
+  });
+
+  it('does not throw when deleting non-existent agent', () => {
+    initStore('my-secret-passphrase');
+    expect(() => deleteAgentCredentials('nonexistent')).not.toThrow();
   });
 });

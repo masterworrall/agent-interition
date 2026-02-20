@@ -54,6 +54,8 @@ export async function provisionAgent(config: AgentConfig): Promise<ProvisionedAg
   return {
     webId,
     podUrl,
+    email,
+    password,
     clientCredentials: { id: creds.id, secret: creds.secret },
     config,
   };

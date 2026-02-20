@@ -15,6 +15,8 @@ provisionAgent({ name, displayName, serverUrl })
       podUrl: agent.podUrl,
       id: agent.clientCredentials.id,
       secret: agent.clientCredentials.secret,
+      email: agent.email,
+      password: agent.password,
     });
 
     console.log(JSON.stringify({

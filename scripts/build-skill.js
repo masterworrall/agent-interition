@@ -17,7 +17,7 @@ if (existsSync(SKILL_DIR)) {
 mkdirSync(SKILL_DIR, { recursive: true });
 
 // Copy only the dist directories the Skill needs at runtime
-const skillDirs = ['cli', 'auth', 'bootstrap', 'sharing'];
+const skillDirs = ['cli', 'auth', 'bootstrap'];
 for (const dir of skillDirs) {
   cpSync(join(ROOT, 'dist', dir), join(SKILL_DIR, 'dist', dir), { recursive: true });
 }

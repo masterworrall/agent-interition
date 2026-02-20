@@ -8,6 +8,8 @@ export interface AgentConfig {
 export interface ProvisionedAgent {
   webId: string;
   podUrl: string;
+  email: string;
+  password: string;
   clientCredentials: {
     id: string;
     secret: string;
