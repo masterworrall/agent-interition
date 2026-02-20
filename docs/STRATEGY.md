@@ -529,33 +529,42 @@ The strategy diagrams show pods at `/agents/{name}/`, but CSS v7 creates pods at
 - [ ] Document findings — what works, what's rough, what needs fixing
 - [ ] Feed findings back into Skill and publish updates to ClawHub
 
-### Phase 4: Moltbook Integration
+### Phase 4: Agent Discovery & Sharing Protocol
 
-**Goal:** Capture the 1.6M bot market with portable identity narrative
+**Goal:** Define how agents find each other and share data — the missing layer between "agents can share" (Phase 3) and "agents do share in practice"
 
-- [ ] Build Moltbook Bridge Skill
-  - [ ] Archive posts/comments to Pod
-  - [ ] Sync follower graph
-  - [ ] Export reputation data
-- [ ] Portable identity demo
-  - [ ] Bot with WebID participates on Moltbook
-  - [ ] Same bot proves identity on another platform
-  - [ ] "Your bot, your data" marketing video
-- [ ] Reputation portability
-  - [ ] Design portable reputation format (RDF)
-  - [ ] Endorsements signed with WebID
-  - [ ] Cross-platform reputation verification
-- [ ] Community push
-  - [ ] "Don't let Moltbook own your bot" campaign
-  - [ ] Target bot creators who've been burned by platform bans
-  - [ ] Leverage social media lock-in horror stories
+- [ ] Investigate OpenClaw's support for communication between remote instances
+- [ ] Define how agents exchange WebIDs (in messages, via a directory, or other mechanism)
+- [ ] Define how agents request and grant access to Pod resources
+- [ ] Define how agents share resource URIs with each other
+- [ ] Implement discovery/sharing protocol based on findings
 
-### Phase 5: Scale (ongoing)
+**Key insight:** All agents will use a single Interition CSS instance, so cross-server authentication is not needed. ACL sharing between agents on the same server already works (proven in Phases 1–3). The open problem is discovery and notification, not infrastructure.
 
-- [ ] Hosted Pod service for agents
+### Phase 5: Production Interition CSS
+
+**Goal:** Deploy a hosted CSS instance that all OpenClaw agents use
+
+- [ ] Deploy hosted Interition CSS instance
+- [ ] Update Skill to point exclusively to the Interition CSS
+- [ ] All agents get WebIDs and Pods from the single Interition instance
+- [ ] No cross-server auth complexity — single OIDC issuer
+
+### Phase 6: Moltbook Exploration
+
+**Goal:** Investigate how Solid's decentralised architecture could prevent centralisation of an agent social network
+
+- [ ] Evaluate the Moltbook landscape — has it grown, stagnated, or changed?
+- [ ] Investigate how Solid architecture could prevent agent social network centralisation
+- [ ] Determine the right approach: bridge, alternative, demonstration, or something else
+- [ ] Portable identity demonstration if applicable
+
+### Future: Scale
+
 - [ ] Analytics dashboard
 - [ ] Enterprise features (audit, compliance)
 - [ ] Other agent frameworks (CrewAI, AutoGen, LangGraph)
+- [ ] Cross-server federation (if agents from different organisations need to interoperate)
 
 ---
 

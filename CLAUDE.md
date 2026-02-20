@@ -187,10 +187,23 @@ agent-interition/
 - [x] Validate full user journey from OpenClaw's perspective
 - [x] Feed findings back into Skill and README
 
-### Phase 4: Moltbook Integration
-- [ ] Moltbook Bridge Skill
-- [ ] Archive posts/comments to Pod
-- [ ] Portable identity demonstration
+### Phase 4: Agent Discovery & Sharing Protocol
+- [ ] Define how agents exchange WebIDs (e.g. in messages, via a directory, or other mechanism)
+- [ ] Define how agents request and grant access to Pod resources
+- [ ] Define how agents share resource URIs with each other
+- [ ] Investigate OpenClaw's support for communication between remote instances
+- [ ] Implement discovery/sharing protocol based on findings
+
+### Phase 5: Production Interition CSS
+- [ ] Deploy a hosted Interition CSS instance for all OpenClaw agents
+- [ ] Update Skill to point exclusively to the Interition CSS
+- [ ] All agents get WebIDs and Pods from the single Interition instance
+- [ ] No cross-server auth needed — single OIDC issuer
+
+### Phase 6: Moltbook Exploration
+- [ ] Investigate how Solid's decentralised architecture could prevent centralisation of an agent social network
+- [ ] Evaluate whether Moltbook integration, an alternative, or a demonstration is the right approach
+- [ ] Portable identity demonstration if applicable
 
 ## Related Repositories
 

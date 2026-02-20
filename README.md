@@ -186,11 +186,21 @@ See [Dogfooding Setup Guide](docs/dogfooding-setup.md) for full details.
 - [x] Complete dogfood test plan (token-curl-test-plan.md)
 - [x] Feed findings back into Skill and README
 
-**Phase 4: Moltbook Integration**
+**Phase 4: Agent Discovery & Sharing Protocol**
 
-- [ ] Moltbook Bridge Skill
-- [ ] Archive posts/comments to Pod
-- [ ] Portable identity demonstration
+- [ ] Define how agents exchange WebIDs and discover each other
+- [ ] Define how agents request/grant access and share resource URIs
+- [ ] Investigate OpenClaw inter-instance communication capabilities
+
+**Phase 5: Production Interition CSS**
+
+- [ ] Deploy hosted Interition CSS instance for all OpenClaw agents
+- [ ] Update Skill to use Interition CSS exclusively
+- [ ] Single OIDC issuer — no cross-server auth complexity
+
+**Phase 6: Moltbook Exploration**
+
+- [ ] Investigate how Solid architecture could prevent agent social network centralisation
 
 ## Development
 
