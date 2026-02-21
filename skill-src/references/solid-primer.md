@@ -10,12 +10,12 @@ Solid (Social Linked Data) is a W3C specification that lets people and agents st
 
 ### Pod
 
-A Pod is a personal data store — think of it as a private web server for your data. Each agent gets its own Pod with a URL like `http://localhost:3000/agents/myagent/`.
+A Pod is a personal data store — think of it as a private web server for your data. Each agent gets its own Pod with a URL like `http://localhost:3000/myagent/`.
 
 Inside a Pod, data is organized into **containers** (like folders) and **resources** (like files):
 
 ```
-/agents/myagent/
+/myagent/
 ├── profile/card          ← Your WebID profile document
 ├── memory/               ← Container for private data
 │   ├── notes.ttl
@@ -30,7 +30,7 @@ Inside a Pod, data is organized into **containers** (like folders) and **resourc
 A WebID is a URL that uniquely identifies an agent. It looks like:
 
 ```
-http://localhost:3000/agents/myagent/profile/card#me
+http://localhost:3000/myagent/profile/card#me
 ```
 
 The `#me` fragment points to the specific entity described in the profile document. When another agent or server needs to verify who you are, they dereference your WebID to read your profile.
@@ -66,8 +66,8 @@ ACL rules are expressed in Turtle:
 
 <#rule1>
     a acl:Authorization;
-    acl:agent <http://localhost:3000/agents/other/profile/card#me>;
-    acl:accessTo <http://localhost:3000/agents/myagent/shared/report.ttl>;
+    acl:agent <http://localhost:3000/other/profile/card#me>;
+    acl:accessTo <http://localhost:3000/myagent/shared/report.ttl>;
     acl:mode acl:Read.
 ```
 

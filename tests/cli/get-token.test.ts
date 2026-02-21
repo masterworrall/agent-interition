@@ -18,8 +18,8 @@ const { initStore, saveCredentials, loadCredentials } = await import(
 );
 
 const testCreds = {
-  webId: 'http://localhost:3000/agents/researcher/profile/card#me',
-  podUrl: 'http://localhost:3000/agents/researcher/',
+  webId: 'http://localhost:3000/researcher/profile/card#me',
+  podUrl: 'http://localhost:3000/researcher/',
   id: 'test-client-id',
   secret: 'test-client-secret',
   email: 'researcher@agents.interition.local',
@@ -53,8 +53,8 @@ describe('get-token', () => {
     const creds = loadCredentials('researcher');
     expect(creds.id).toBe('test-client-id');
     expect(creds.secret).toBe('test-client-secret');
-    expect(creds.podUrl).toBe('http://localhost:3000/agents/researcher/');
-    expect(creds.webId).toBe('http://localhost:3000/agents/researcher/profile/card#me');
+    expect(creds.podUrl).toBe('http://localhost:3000/researcher/');
+    expect(creds.webId).toBe('http://localhost:3000/researcher/profile/card#me');
   });
 
   it('output shape matches expected JSON structure', () => {

@@ -48,10 +48,11 @@ npm run conformance
 │  │  Bootstrap     │    │  Community Solid Server     │     │
 │  │  Service       │    │  (minimal config)           │     │
 │  │                │    │                             │     │
-│  │  • WebID setup │    │  /agents/{name}/            │     │
+│  │  • WebID setup │    │  /{name}/            │     │
 │  │  • Pod creation│    │    /memory/                 │     │
 │  │  • Tunnel init │    │    /shared/                 │     │
 │  └────────────────┘    │    /conversations/          │     │
+│                        │    /inbox/                  │     │
 │                        └─────────────────────────────┘     │
 │                                     │                       │
 │  ┌──────────────────────────────────▼───────────────┐      │
@@ -132,14 +133,19 @@ agent-interition/
 ├── src/
 │   ├── bootstrap/         # WebID + Pod provisioning
 │   ├── auth/              # Client credentials → Bearer token auth
-│   ├── sharing/           # WAC access control (grant/revoke)
+│   ├── sharing/           # WAC access control (grant/revoke) + share orchestration
+│   ├── discovery/         # Agent directory (registration, listing, search)
+│   ├── notifications/     # Inbox system (send, check, delete notifications)
 │   ├── cli/               # CLI commands for OpenClaw Skill
 │   │   ├── credentials-store.ts  # AES-256-GCM encrypted credential storage
 │   │   ├── args.ts        # Shared argument parsing
 │   │   ├── provision.ts   # Provision agent → save credentials
 │   │   ├── deprovision.ts # Deprovision agent → remove credentials + CSS account
 │   │   ├── get-token.ts   # Get Bearer token for Solid HTTP requests
-│   │   └── status.ts      # List provisioned agents
+│   │   ├── status.ts      # List provisioned agents
+│   │   ├── discover.ts    # List/search agents in directory
+│   │   ├── share.ts       # Share resource with agent (grant + notify)
+│   │   └── inbox.ts       # Check inbox, delete notifications
 │   ├── demo/              # Two-agent sharing demo
 │   └── training/          # Step-by-step training scripts
 ├── skill-src/             # OpenClaw Skill package source
@@ -187,12 +193,16 @@ agent-interition/
 - [x] Validate full user journey from OpenClaw's perspective
 - [x] Feed findings back into Skill and README
 
-### Phase 4: Agent Discovery & Sharing Protocol
-- [ ] Define how agents exchange WebIDs (e.g. in messages, via a directory, or other mechanism)
-- [ ] Define how agents request and grant access to Pod resources
-- [ ] Define how agents share resource URIs with each other
-- [ ] Investigate OpenClaw's support for communication between remote instances
-- [ ] Implement discovery/sharing protocol based on findings
+### Phase 4: Agent Discovery & Sharing Protocol (Complete)
+- [x] Public agent directory at `/directory/agents.ttl` with auto-registration during provisioning
+- [x] Inbox container (`/inbox/`) with Append ACL for authenticated agents
+- [x] Notification system using ActivityStreams vocabulary (W3C standard)
+- [x] `shareResource()` orchestration — grants ACL access + sends inbox notification
+- [x] CLI commands: `discover.sh`, `share.sh`, `inbox.sh`
+- [x] Discovery functions: `listAgents()`, `findAgentByName()`, `findAgentsByCapability()`
+- [x] Turtle parsing with n3 library for directory and inbox contents
+- [x] Unit tests for directory and notification systems
+- [x] Integration test: full provision → register → discover → share → notify → access → revoke flow
 
 ### Phase 5: Production Interition CSS
 - [ ] Deploy a hosted Interition CSS instance for all OpenClaw agents

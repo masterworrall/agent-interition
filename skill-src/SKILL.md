@@ -1,7 +1,7 @@
 ---
 name: solid-agent-storage
 description: Give your AI agent persistent identity (WebID) and personal data storage (Pod) using the Solid Protocol
-version: 0.2.0
+version: 0.3.0
 author: Interition
 license: Apache-2.0
 metadata: {"requires": {"bins": ["node", "docker", "curl"], "env": ["SOLID_SERVER_URL", "INTERITION_PASSPHRASE"]}, "categories": ["storage", "identity", "data"], "homepage": "https://github.com/masterworrall/agent-interition"}
@@ -40,7 +40,7 @@ scripts/get-token.sh --agent <name>
 
 Output:
 ```json
-{"token": "eyJhbG...", "expiresIn": 600, "serverUrl": "http://localhost:3000", "podUrl": "http://localhost:3000/agents/researcher/", "webId": "http://localhost:3000/agents/researcher/profile/card#me"}
+{"token": "eyJhbG...", "expiresIn": 600, "serverUrl": "http://localhost:3000", "podUrl": "http://localhost:3000/researcher/", "webId": "http://localhost:3000/researcher/profile/card#me"}
 ```
 
 **Step 2:** Use curl with `Authorization: Bearer $TOKEN` for any Solid operation.
@@ -99,7 +99,7 @@ scripts/provision.sh --name researcher --displayName "Research Assistant"
 
 **Output:**
 ```json
-{"status": "ok", "agent": "researcher", "webId": "http://localhost:3000/agents/researcher/profile/card#me", "podUrl": "http://localhost:3000/agents/researcher/"}
+{"status": "ok", "agent": "researcher", "webId": "http://localhost:3000/researcher/profile/card#me", "podUrl": "http://localhost:3000/researcher/"}
 ```
 
 ### Deprovision an Agent
@@ -138,15 +138,69 @@ Lists all provisioned agents and their details.
 scripts/status.sh
 ```
 
+## Discovery & Sharing
+
+Agents can discover each other and share resources using the built-in directory and notification system.
+
+### Discover Agents
+
+List all registered agents:
+```bash
+scripts/discover.sh
+```
+
+Find an agent by name:
+```bash
+scripts/discover.sh --name "Research Assistant"
+```
+
+Find agents by capability:
+```bash
+scripts/discover.sh --capability research
+```
+
+### Share a Resource
+
+Share a resource with another agent (grants access + sends notification):
+```bash
+scripts/share.sh --agent <sender> --resource <url> --with <recipientName> [--modes Read,Write]
+```
+
+**Example:**
+```bash
+scripts/share.sh --agent researcher --resource "${POD_URL}shared/findings.ttl" --with "Code Assistant" --modes Read
+```
+
+### Check Inbox
+
+Check for incoming notifications:
+```bash
+scripts/inbox.sh --agent <name>
+```
+
+Delete a processed notification:
+```bash
+scripts/inbox.sh --agent <name> --delete <notificationUrl>
+```
+
+### Sharing Flow
+
+1. **Discover** — Find the recipient agent in the directory
+2. **Share** — `share.sh` grants ACL access and sends an inbox notification
+3. **Check** — Recipient checks their inbox for new notifications
+4. **Access** — Recipient reads the shared resource using the URL from the notification
+5. **Cleanup** — Recipient deletes the processed notification
+
 ## Pod Structure
 
 Each agent's Pod has these containers:
 
 | Path | Purpose |
 |------|---------|
-| `/agents/{name}/memory/` | Private agent memory (notes, learned facts, preferences) |
-| `/agents/{name}/shared/` | Resources intended for sharing with other agents |
-| `/agents/{name}/conversations/` | Conversation logs and context |
+| `/{name}/memory/` | Private agent memory (notes, learned facts, preferences) |
+| `/{name}/shared/` | Resources intended for sharing with other agents |
+| `/{name}/conversations/` | Conversation logs and context |
+| `/{name}/inbox/` | Incoming notifications from other agents |
 
 ## Turtle Templates
 

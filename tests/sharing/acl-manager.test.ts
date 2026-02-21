@@ -25,12 +25,12 @@ describe('grantAccess', () => {
 
     await grantAccess(
       'http://localhost:3000/resource',
-      'http://localhost:3000/agents/beta/profile/card#me',
+      'http://localhost:3000/beta/profile/card#me',
       ['Read'],
       mockFetch,
     );
 
-    expect(savedAcl).toContain('acl:agent <http://localhost:3000/agents/beta/profile/card#me>');
+    expect(savedAcl).toContain('acl:agent <http://localhost:3000/beta/profile/card#me>');
     expect(savedAcl).toContain('acl:Read');
     expect(savedAcl).toContain('acl:accessTo <http://localhost:3000/resource>');
   });
@@ -44,13 +44,13 @@ describe('revokeAccess', () => {
 
 <#owner>
     a acl:Authorization;
-    acl:agent <http://localhost:3000/agents/alpha/profile/card#me>;
+    acl:agent <http://localhost:3000/alpha/profile/card#me>;
     acl:accessTo <http://localhost:3000/resource>;
     acl:mode acl:Read, acl:Write, acl:Control.
 
-<#agent-http___localhost_3000_agents_beta_profile_card_me>
+<#agent-http___localhost_3000_beta_profile_card_me>
     a acl:Authorization;
-    acl:agent <http://localhost:3000/agents/beta/profile/card#me>;
+    acl:agent <http://localhost:3000/beta/profile/card#me>;
     acl:accessTo <http://localhost:3000/resource>;
     acl:mode acl:Read.
 `;
@@ -76,11 +76,11 @@ describe('revokeAccess', () => {
 
     await revokeAccess(
       'http://localhost:3000/resource',
-      'http://localhost:3000/agents/beta/profile/card#me',
+      'http://localhost:3000/beta/profile/card#me',
       mockFetch,
     );
 
     expect(savedAcl).toContain('#owner');
-    expect(savedAcl).not.toContain('agents/beta/profile/card#me');
+    expect(savedAcl).not.toContain('beta/profile/card#me');
   });
 });

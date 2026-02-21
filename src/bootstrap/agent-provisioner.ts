@@ -3,12 +3,13 @@ import { createAccount, addPasswordLogin, createPod, createClientCredentials } f
 import { buildProfilePatch } from './webid-profile.js';
 import { createPodContainers } from './pod-structure.js';
 import { getAuthenticatedFetch } from '../auth/client-credentials.js';
+import { registerAgent } from '../discovery/directory.js';
 
 /**
  * Full agent provisioning flow:
  * 1. Create CSS account
  * 2. Add password login
- * 3. Create pod at /agents/{name}/
+ * 3. Create pod at /{name}/
  * 4. Create client credentials
  * 5. Patch WebID profile with agent metadata
  * 6. Create standard container structure
@@ -24,7 +25,7 @@ export async function provisionAgent(config: AgentConfig): Promise<ProvisionedAg
   console.log(`[bootstrap] Adding password login...`);
   await addPasswordLogin(serverUrl, account.cookie, email, password);
 
-  console.log(`[bootstrap] Creating pod at /agents/${name}/...`);
+  console.log(`[bootstrap] Creating pod at /${name}/...`);
   const { pod: podUrl, webId } = await createPod(serverUrl, account.cookie, name);
 
   console.log(`[bootstrap] Creating client credentials...`);
@@ -45,7 +46,19 @@ export async function provisionAgent(config: AgentConfig): Promise<ProvisionedAg
   }
 
   console.log(`[bootstrap] Creating pod container structure...`);
-  await createPodContainers(podUrl, authFetch);
+  await createPodContainers(podUrl, authFetch, webId);
+
+  console.log(`[bootstrap] Registering agent in directory...`);
+  try {
+    await registerAgent(serverUrl, {
+      webId,
+      name: displayName,
+      podUrl,
+      capabilities: config.capabilities ?? [],
+    }, authFetch);
+  } catch (err) {
+    console.warn(`[bootstrap] Warning: Directory registration failed: ${err instanceof Error ? err.message : err}`);
+  }
 
   console.log(`[bootstrap] Agent "${name}" provisioned successfully!`);
   console.log(`  WebID: ${webId}`);

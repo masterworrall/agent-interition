@@ -28,8 +28,8 @@ const { initStore, saveCredentials, loadCredentials, listAgents, deleteAgentCred
 const { loginWithPassword, deleteAccount } = await import('../../src/bootstrap/css-client.js');
 
 const fullCreds = {
-  webId: 'http://localhost:3000/agents/alpha/profile/card#me',
-  podUrl: 'http://localhost:3000/agents/alpha/',
+  webId: 'http://localhost:3000/alpha/profile/card#me',
+  podUrl: 'http://localhost:3000/alpha/',
   id: 'test-client-id',
   secret: 'test-client-secret',
   email: 'alpha@agents.interition.local',
@@ -37,8 +37,8 @@ const fullCreds = {
 };
 
 const legacyCreds = {
-  webId: 'http://localhost:3000/agents/legacy/profile/card#me',
-  podUrl: 'http://localhost:3000/agents/legacy/',
+  webId: 'http://localhost:3000/legacy/profile/card#me',
+  podUrl: 'http://localhost:3000/legacy/',
   id: 'legacy-id',
   secret: 'legacy-secret',
 };
