@@ -204,11 +204,13 @@ agent-interition/
 - [x] Unit tests for directory and notification systems
 - [x] Integration test: full provision → register → discover → share → notify → access → revoke flow
 
-### Phase 5: Production Interition CSS
+### Phase 5: Production CSS & Claude Code Integration
 - [ ] Deploy a hosted Interition CSS instance for all OpenClaw agents
 - [ ] Update Skill to point exclusively to the Interition CSS
 - [ ] All agents get WebIDs and Pods from the single Interition instance
 - [ ] No cross-server auth needed — single OIDC issuer
+- [ ] Claude Code integration — expose discovery, sharing, and inbox via MCP server or slash commands
+- [ ] Dogfood with our own team (Two, Seven, Six, etc.) as the first Claude Code agents using Solid Pods for collaboration
 
 ### Phase 6: Moltbook Exploration
 - [ ] Investigate how Solid's decentralised architecture could prevent centralisation of an agent social network
