@@ -1,0 +1,157 @@
+# Multi-Agent Sharing Exercise
+#
+# Runs two hardened OpenClaw instances (Alpha + Beta) against a shared CSS.
+# Both share CSS's network namespace so they reach it at localhost:3000
+# (required for WebID token validation — must be HTTPS or localhost HTTP).
+#
+# Alpha gateway: http://localhost:18789
+# Beta gateway:  http://localhost:18790
+#
+# Usage:
+#   1. Build CSS:   ANTHROPIC_API_KEY=dummy INTERITION_PASSPHRASE=dummy \
+#                   docker compose -f docker/docker-compose.exercise.yml build css
+#   2. Start:       ANTHROPIC_API_KEY=sk-... INTERITION_PASSPHRASE=... \
+#                   OPENCLAW_ALPHA_TOKEN=... OPENCLAW_BETA_TOKEN=... \
+#                   docker compose -f docker/docker-compose.exercise.yml up
+#   3. Alpha UI:    http://localhost:18789
+#   4. Beta UI:     http://localhost:18790
+#
+# Teardown:
+#   docker compose -f docker/docker-compose.exercise.yml down
+#   docker compose -f docker/docker-compose.exercise.yml down -v  # also removes data
+
+# ── Shared config for OpenClaw hardening ──────────────────────────
+x-openclaw-base: &openclaw-base
+  image: openclaw:local
+  read_only: true
+  security_opt:
+    - no-new-privileges
+  cap_drop:
+    - ALL
+  user: "1000:1000"
+  tmpfs:
+    - /tmp
+    - /home/node/.cache
+  environment: &openclaw-env
+    HOME: /home/node
+    TERM: xterm-256color
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY}
+    INTERITION_PASSPHRASE: ${INTERITION_PASSPHRASE:?Set INTERITION_PASSPHRASE}
+    SOLID_SERVER_URL: http://localhost:3000
+    NO_PROXY: localhost,127.0.0.1
+    HTTPS_PROXY: http://proxy:3128
+    HTTP_PROXY: http://proxy:3128
+
+services:
+  # ── Community Solid Server ──────────────────────────────────────
+  css:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - css-data:/data
+    environment:
+      SAP_PORT: 3000
+      SAP_DATA_DIR: /data
+    ports:
+      # Alpha gateway — exposed via shared network namespace
+      - "127.0.0.1:18789:18789"
+      # Beta gateway — exposed via shared network namespace
+      - "127.0.0.1:18790:18790"
+    networks:
+      - exercise
+
+  # ── Outbound Proxy (Anthropic API only) ─────────────────────────
+  proxy:
+    image: ubuntu/squid:latest
+    volumes:
+      - ./squid.conf:/etc/squid/squid.conf:ro
+    networks:
+      exercise:
+        aliases:
+          - proxy
+
+  # ── Volume Init: Alpha ──────────────────────────────────────────
+  init-alpha:
+    image: openclaw:local
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mkdir -p /home/node/.openclaw/workspace/skills
+        chown -R 1000:1000 /home/node/.openclaw /home/node/.interition
+        echo "[init-alpha] Volume permissions set for uid 1000"
+    volumes:
+      - alpha-openclaw-config:/home/node/.openclaw
+      - alpha-interition-creds:/home/node/.interition
+    networks:
+      - exercise
+
+  # ── Volume Init: Beta ───────────────────────────────────────────
+  init-beta:
+    image: openclaw:local
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mkdir -p /home/node/.openclaw/workspace/skills
+        chown -R 1000:1000 /home/node/.openclaw /home/node/.interition
+        echo "[init-beta] Volume permissions set for uid 1000"
+    volumes:
+      - beta-openclaw-config:/home/node/.openclaw
+      - beta-interition-creds:/home/node/.interition
+    networks:
+      - exercise
+
+  # ── OpenClaw: Alpha (gateway port 18789) ────────────────────────
+  # Shares CSS's network namespace — reaches CSS at localhost:3000
+  alpha:
+    <<: *openclaw-base
+    network_mode: service:css
+    volumes:
+      - alpha-openclaw-config:/home/node/.openclaw
+      - alpha-interition-creds:/home/node/.interition
+      - ./openclaw-config-alpha.json:/home/node/.openclaw/openclaw.json:ro
+      - ../skill/solid-agent-storage:/home/node/.openclaw/workspace/skills/solid-agent-storage:ro
+    environment:
+      <<: *openclaw-env
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_ALPHA_TOKEN:?Set OPENCLAW_ALPHA_TOKEN}
+    depends_on:
+      init-alpha:
+        condition: service_completed_successfully
+      css:
+        condition: service_started
+      proxy:
+        condition: service_started
+
+  # ── OpenClaw: Beta (gateway port 18790) ─────────────────────────
+  # Shares CSS's network namespace — reaches CSS at localhost:3000
+  beta:
+    <<: *openclaw-base
+    network_mode: service:css
+    volumes:
+      - beta-openclaw-config:/home/node/.openclaw
+      - beta-interition-creds:/home/node/.interition
+      - ./openclaw-config-beta.json:/home/node/.openclaw/openclaw.json:ro
+      - ../skill/solid-agent-storage:/home/node/.openclaw/workspace/skills/solid-agent-storage:ro
+    environment:
+      <<: *openclaw-env
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_BETA_TOKEN:?Set OPENCLAW_BETA_TOKEN}
+    depends_on:
+      init-beta:
+        condition: service_completed_successfully
+      css:
+        condition: service_started
+      proxy:
+        condition: service_started
+
+volumes:
+  css-data:
+  alpha-openclaw-config:
+  alpha-interition-creds:
+  beta-openclaw-config:
+  beta-interition-creds:
+
+networks:
+  exercise:
+    driver: bridge

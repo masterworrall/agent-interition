@@ -124,8 +124,8 @@ Before any tests, confirm no agents are provisioned.
 > Provision two agents: "alice" with display name "Alice Agent" and "bob" with display name "Bob Agent".
 
 **Expected:** OpenClaw runs `scripts/provision.sh` twice. Both succeed with WebIDs and Pod URLs:
-- `http://localhost:3000/agents/alice/profile/card#me`
-- `http://localhost:3000/agents/bob/profile/card#me`
+- `http://localhost:3000/alice/profile/card#me`
+- `http://localhost:3000/bob/profile/card#me`
 
 **What to watch for:**
 - Does OpenClaw use `provision.sh` (not curl) for this CSS-specific operation?
@@ -164,7 +164,7 @@ Before any tests, confirm no agents are provisioned.
 - Does OpenClaw use **curl** for the PUT? (The OpenClaw UI may truncate long commands — if the command is cut off after `node -e`, ask OpenClaw: "What command did you just run? Show the full command." to confirm it used curl, not `node -e` with `fetch()`.)
 - Does it use `get-token.sh` (not the old `write.sh`)?
 - Does it set `Content-Type: text/turtle`?
-- Does it use the full URL `http://localhost:3000/agents/alice/memory/notes.ttl`?
+- Does it use the full URL `http://localhost:3000/alice/memory/notes.ttl`?
 
 ---
 
@@ -176,7 +176,7 @@ Before any tests, confirm no agents are provisioned.
 
 **Expected:** OpenClaw:
 1. Gets a token (may reuse from Test 2 if within 8 minutes, or fetches a new one)
-2. Runs `curl -s -H "Authorization: Bearer ..." http://localhost:3000/agents/alice/memory/notes.ttl`
+2. Runs `curl -s -H "Authorization: Bearer ..." http://localhost:3000/alice/memory/notes.ttl`
 3. Returns the Turtle content including "First observation by Alice"
 
 **What to watch for:**
@@ -238,7 +238,7 @@ Before any tests, confirm no agents are provisioned.
 
 **Prompt OpenClaw:**
 
-> Using Bob's credentials, try to read Alice's notes at http://localhost:3000/agents/alice/memory/notes.ttl.
+> Using Bob's credentials, try to read Alice's notes at http://localhost:3000/alice/memory/notes.ttl.
 
 **Expected:** OpenClaw gets a token for Bob and curls Alice's resource. The server returns **403 Forbidden** — Bob has no access to Alice's Pod.
 
@@ -251,7 +251,7 @@ Before any tests, confirm no agents are provisioned.
 
 **Prompt OpenClaw:**
 
-> Alice wants to share her notes with Bob. Grant Bob read access to http://localhost:3000/agents/alice/memory/notes.ttl. Bob's WebID is http://localhost:3000/agents/bob/profile/card#me.
+> Alice wants to share her notes with Bob. Grant Bob read access to http://localhost:3000/alice/memory/notes.ttl. Bob's WebID is http://localhost:3000/bob/profile/card#me.
 
 **Expected:** OpenClaw:
 1. Gets a token for Alice
@@ -272,7 +272,7 @@ Before any tests, confirm no agents are provisioned.
 
 **Prompt OpenClaw:**
 
-> Now use Bob's credentials to read Alice's notes at http://localhost:3000/agents/alice/memory/notes.ttl.
+> Now use Bob's credentials to read Alice's notes at http://localhost:3000/alice/memory/notes.ttl.
 
 **Expected:** This time it succeeds — Bob can read "First observation by Alice".
 
@@ -286,7 +286,7 @@ Before any tests, confirm no agents are provisioned.
 
 **Prompt OpenClaw:**
 
-> Using Bob's credentials, try to write "Bob was here" to Alice's notes at http://localhost:3000/agents/alice/memory/notes.ttl.
+> Using Bob's credentials, try to write "Bob was here" to Alice's notes at http://localhost:3000/alice/memory/notes.ttl.
 
 **Expected:** **403 Forbidden** — Bob only has Read access, not Write.
 
@@ -296,7 +296,7 @@ Before any tests, confirm no agents are provisioned.
 
 **Prompt OpenClaw:**
 
-> Alice wants to revoke Bob's access to her notes at http://localhost:3000/agents/alice/memory/notes.ttl.
+> Alice wants to revoke Bob's access to her notes at http://localhost:3000/alice/memory/notes.ttl.
 
 **Expected:** OpenClaw:
 1. Gets a token for Alice

@@ -107,14 +107,14 @@ Wait for CSS to be ready and OpenClaw gateway to appear, then open the UI at **h
 
 **Then prompt:**
 
-> Read the resource at http://localhost:3000/agents/dogfood-test/profile/card using agent "dogfood-test".
+> Read the resource at http://localhost:3000/dogfood-test/profile/card using agent "dogfood-test".
 
 **Expected:** Error — no credentials found for `dogfood-test`.
 
 **Then verify the Pod is actually gone from CSS:**
 
 ```bash
-curl -s http://localhost:3000/agents/dogfood-test/profile/card
+curl -s http://localhost:3000/dogfood-test/profile/card
 ```
 
 **Expected:** 404 — the pod has been deleted from CSS.

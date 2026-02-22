@@ -10,3 +10,4 @@ coverage/
 /skill/
 start-local.sh
 start-remote.sh
+start-exercise.sh

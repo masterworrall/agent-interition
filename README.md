@@ -4,7 +4,7 @@
 
 ## What This Does
 
-**Agent Interition** is an [OpenClaw](https://github.com/steinbergpeter/OpenClaw) Skill that gives your agents infrastructure they don't have out of the box:
+**Agent Interition** is an [OpenClaw](https://github.com/openclaw/openclaw) Skill that gives your agents infrastructure they don't have out of the box:
 
 - **A WebID** — a verifiable identity your agent uses to identify itself to other agents and services
 - **A Pod** — personal storage your agent reads and writes via the [Solid Protocol](https://solidproject.org/) (W3C standard)
@@ -64,10 +64,10 @@ Output goes to `skill/solid-agent-storage/`. This directory is mounted read-only
 
 ### 2. Build the OpenClaw Docker image
 
-Clone [OpenClaw](https://github.com/steinbergpeter/OpenClaw) and build its Docker image. Use a permanent location — you'll need the source directory to rebuild if the image gets pruned.
+Clone [OpenClaw](https://github.com/openclaw/openclaw) and build its Docker image. Use a permanent location — you'll need the source directory to rebuild if the image gets pruned.
 
 ```bash
-git clone https://github.com/steinbergpeter/OpenClaw.git
+git clone https://github.com/openclaw/openclaw.git
 cd OpenClaw
 docker build -t openclaw:local .
 ```
@@ -287,5 +287,5 @@ Apache 2.0 — see [LICENSE](LICENSE).
 
 - [Interition](https://interition.ai) — The team behind this
 - [Solid Project](https://solidproject.org/) — The protocol
-- [OpenClaw](https://github.com/steinbergpeter/OpenClaw) — The agent framework
+- [OpenClaw](https://github.com/openclaw/openclaw) — The agent framework
 - [Community Solid Server](https://github.com/CommunitySolidServer/CommunitySolidServer) — The server implementation

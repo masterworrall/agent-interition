@@ -4,8 +4,8 @@ Concrete curl examples for all standard Solid Protocol operations. All examples 
 
 ```bash
 TOKEN="eyJhbG..."
-POD_URL="http://localhost:3000/agents/researcher/"
-WEBID="http://localhost:3000/agents/researcher/profile/card#me"
+POD_URL="http://localhost:3000/researcher/"
+WEBID="http://localhost:3000/researcher/profile/card#me"
 SERVER_URL="http://localhost:3000"
 ```
 
@@ -46,7 +46,7 @@ Use PUT to create or overwrite a resource. Always set the correct `Content-Type`
 curl -s -X PUT \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: text/turtle" \
-  -d '@prefix schema: <http://schema.org/>.
+  --data-raw '@prefix schema: <http://schema.org/>.
 <#note-1> a schema:Note;
   schema:text "User prefers bullet-point summaries";
   schema:dateCreated "2024-01-15".' \
@@ -156,7 +156,7 @@ curl -s -I -H "Authorization: Bearer $TOKEN" \
 
 The `Link` header contains the ACL URL, e.g.:
 ```
-Link: <http://localhost:3000/agents/researcher/shared/report.ttl.acl>; rel="acl"
+Link: <http://localhost:3000/researcher/shared/report.ttl.acl>; rel="acl"
 ```
 
 If no ACL link is returned, the convention is to append `.acl` to the resource URL.
@@ -176,13 +176,13 @@ Write a complete ACL document. **Always include an owner rule** so you don't loc
 
 ```bash
 ACL_URL="${POD_URL}shared/report.ttl.acl"
-GRANTEE_WEBID="http://localhost:3000/agents/writer/profile/card#me"
+GRANTEE_WEBID="http://localhost:3000/writer/profile/card#me"
 RESOURCE_URL="${POD_URL}shared/report.ttl"
 
 curl -s -X PUT \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: text/turtle" \
-  -d "@prefix acl: <http://www.w3.org/ns/auth/acl#>.
+  --data-raw "@prefix acl: <http://www.w3.org/ns/auth/acl#>.
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 
 <#owner>
@@ -209,7 +209,7 @@ To revoke a specific agent's access, PUT a new ACL document that omits their rul
 curl -s -X PUT \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: text/turtle" \
-  -d "@prefix acl: <http://www.w3.org/ns/auth/acl#>.
+  --data-raw "@prefix acl: <http://www.w3.org/ns/auth/acl#>.
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 
 <#owner>
@@ -228,7 +228,7 @@ Allow anyone (unauthenticated) to read a resource:
 curl -s -X PUT \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: text/turtle" \
-  -d "@prefix acl: <http://www.w3.org/ns/auth/acl#>.
+  --data-raw "@prefix acl: <http://www.w3.org/ns/auth/acl#>.
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 
 <#owner>
@@ -247,6 +247,7 @@ curl -s -X PUT \
 
 ## Tips
 
+- **Use `--data-raw` instead of `-d` for Turtle content.** Curl's `-d` flag treats a leading `@` as a file path reference. Since Turtle content starts with `@prefix`, using `-d` sends empty content. `--data-raw` sends the string literally.
 - **Trailing slashes matter:** Container URLs end with `/`, resource URLs don't.
 - **Content-Type is required** on PUT and PATCH — the server rejects requests without it.
 - **Check HTTP status codes:** 200/201/204 = success, 401 = expired token, 403 = no access, 404 = not found, 409 = conflict.

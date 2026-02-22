@@ -102,8 +102,8 @@ You'll see JSON output like:
 
 ```json
 {
-  "webId": "http://localhost:3000/agents/alice/profile/card#me",
-  "podUrl": "http://localhost:3000/agents/alice/",
+  "webId": "http://localhost:3000/alice/profile/card#me",
+  "podUrl": "http://localhost:3000/alice/",
   "clientCredentials": {
     "id": "...",
     "secret": "..."
@@ -124,10 +124,10 @@ You'll see JSON output like:
 
 **Explore the Pod in your browser:**
 
-- WebID profile: http://localhost:3000/agents/alice/profile/card#me
-- Pod root: http://localhost:3000/agents/alice/
-- Shared folder: http://localhost:3000/agents/alice/shared/
-- Memory folder: http://localhost:3000/agents/alice/memory/
+- WebID profile: http://localhost:3000/alice/profile/card#me
+- Pod root: http://localhost:3000/alice/
+- Shared folder: http://localhost:3000/alice/shared/
+- Memory folder: http://localhost:3000/alice/memory/
 
 ---
 
@@ -136,7 +136,7 @@ You'll see JSON output like:
 Open Alice's WebID in your browser:
 
 ```
-http://localhost:3000/agents/alice/profile/card#me
+http://localhost:3000/alice/profile/card#me
 ```
 
 This returns RDF (Linked Data). The profile says things like:
@@ -208,7 +208,7 @@ Run it:
 npx tsx src/training/step1-provision.ts
 ```
 
-Visit Bob's profile: http://localhost:3000/agents/bob/profile/card#me
+Visit Bob's profile: http://localhost:3000/bob/profile/card#me
 
 ---
 

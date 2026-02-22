@@ -48,7 +48,7 @@ npm run conformance
 │  │  Bootstrap     │    │  Community Solid Server     │     │
 │  │  Service       │    │  (minimal config)           │     │
 │  │                │    │                             │     │
-│  │  • WebID setup │    │  /agents/{name}/            │     │
+│  │  • WebID setup │    │  /{name}/                   │     │
 │  │  • Pod creation│    │    /memory/                 │     │
 │  │  • Tunnel init │    │    /shared/                 │     │
 │  └────────────────┘    │    /conversations/          │     │
@@ -96,6 +96,28 @@ A single CSS instance serves multiple agents' Pods. There are two sharing scenar
 - **Local sharing** (agents on the same CSS): Straightforward — same server, same auth system. This is what Phase 1 demonstrates.
 - **External sharing** (agents on different servers): Requires publicly resolvable WebIDs and internet-reachable Pods. This is where Cloudflare tunnels (or similar) become necessary. Not yet implemented.
 
+## Language Guide — Agent vs Identity/Storage
+
+**This distinction is critical. Get it wrong and we undermine our own value proposition.**
+
+An agent is a **runtime** — an OpenClaw instance, a script, a bot executing somewhere. The CSS holds the agent's **identity (WebID) and storage (Pod)**, which are resources the agent controls. The agent itself runs elsewhere.
+
+| Wrong | Right |
+|-------|-------|
+| "Provision an agent" | "Provision a WebID and Pod for the agent" |
+| "Re-provision both agents" | "Re-provision the WebID and Pod for both agents" |
+| "The agent lives on the CSS" | "The agent's WebID and Pod are hosted on the CSS" |
+| "Deprovision the agent" | "Deprovision the agent's WebID and Pod" |
+| "Agents are on the server" | "Agents' identities and storage are on the server" |
+
+**Why it matters:**
+- Agents can run anywhere (containers, cloud, different machines)
+- Multiple agents can share a CSS without being co-located
+- Solid deliberately separates identity/storage from application logic
+- Our project provides infrastructure (WebID + Pod), not agents
+
+Apply this in all docs, comments, commit messages, and conversation. If a sentence makes it sound like the agent is created by or lives on the CSS, rewrite it.
+
 ## Core Principles
 
 ### 1. Security First
@@ -136,10 +158,10 @@ agent-interition/
 │   ├── cli/               # CLI commands for OpenClaw Skill
 │   │   ├── credentials-store.ts  # AES-256-GCM encrypted credential storage
 │   │   ├── args.ts        # Shared argument parsing
-│   │   ├── provision.ts   # Provision agent → save credentials
-│   │   ├── deprovision.ts # Deprovision agent → remove credentials + CSS account
+│   │   ├── provision.ts   # Provision WebID + Pod → save credentials
+│   │   ├── deprovision.ts # Remove WebID + Pod + credentials from CSS
 │   │   ├── get-token.ts   # Get Bearer token for Solid HTTP requests
-│   │   └── status.ts      # List provisioned agents
+│   │   └── status.ts      # List agents with provisioned WebIDs/Pods
 │   ├── demo/              # Two-agent sharing demo
 │   └── training/          # Step-by-step training scripts
 ├── skill-src/             # OpenClaw Skill package source
@@ -165,7 +187,7 @@ agent-interition/
 
 ### Phase 1: Proof of Concept (Complete)
 - [x] Basic CSS running in Docker
-- [x] WebID generation for agents
+- [x] WebID generation
 - [x] Pod provisioning
 - [x] Demo: Two agents sharing data
 

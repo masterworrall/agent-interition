@@ -119,7 +119,7 @@ Clone to a permanent location (not `/tmp`) so you can rebuild the image easily:
 
 ```bash
 cd /Users/paulworrall/Development
-git clone https://github.com/steinbergpeter/OpenClaw.git
+git clone https://github.com/openclaw/openclaw.git
 cd OpenClaw
 docker build -t openclaw:local .
 ```
