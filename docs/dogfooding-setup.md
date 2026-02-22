@@ -200,10 +200,10 @@ Open `http://localhost:18789` in your browser. Enter the gateway token when prom
 
 Talk to the OpenClaw agent through the Web UI:
 
-1. **Provision an agent:** "Use the solid-agent-storage skill to provision an agent called alpha with display name Agent Alpha"
+1. **Create identity and storage:** "Use the solid-agent-storage skill to create a WebID and Pod for an agent called alpha with display name Agent Alpha"
 2. **Write data:** "Use the solid-agent-storage skill to write a note to alpha's memory"
 3. **Read it back:** "Use the solid-agent-storage skill to read alpha's memory"
-4. **Test sharing:** "Provision a second agent called beta, then grant beta read access to alpha's data"
+4. **Test sharing:** "Create a WebID and Pod for a second agent called beta, then grant beta read access to alpha's data"
 
 ## Configuration Files
 

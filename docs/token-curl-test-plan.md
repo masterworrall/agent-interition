@@ -30,7 +30,7 @@ End-to-end testing of the new Skill workflow: `get-token.sh` + curl replaces the
 
 **curl availability:** If curl is not installed in the OpenClaw container, OpenClaw will fall back to `node -e` with `fetch()`. This still validates the token workflow but not the curl-based approach documented in SKILL.md. Check early (Test 2) and note the finding.
 
-**Pod URL paths:** This test plan uses `/agents/alice/` as an example Pod path, but the actual path depends on CSS configuration. Your server may use `/alice/` instead of `/agents/alice/`. Always use the `podUrl` returned by `provision.sh` as the base — OpenClaw does this automatically. When a test prompt includes a hardcoded path like `/agents/alice/memory/notes.ttl`, substitute your actual Pod URL prefix. If OpenClaw gets it right from the provision output, that's the correct behaviour even if the path differs from this document.
+**Pod URL paths:** This test plan uses `/{name}/` as the Pod path (e.g. `/alice/`), which is the CSS default. Always use the `podUrl` returned by `provision.sh` as the base — OpenClaw does this automatically.
 
 ## Prerequisites
 
@@ -105,11 +105,11 @@ Wait for CSS to be ready and the OpenClaw gateway to appear, then open **http://
 
 ### A2. Verify no agents exist
 
-Before any tests, confirm no agents are provisioned.
+Before any tests, confirm no WebIDs or Pods are provisioned.
 
 **Prompt OpenClaw:**
 
-> List all provisioned agents.
+> List all agents with provisioned WebIDs and Pods.
 
 **Expected:** OpenClaw runs `scripts/status.sh` and reports no agents found.
 
@@ -117,11 +117,11 @@ Before any tests, confirm no agents are provisioned.
 
 ---
 
-### Test 1: Provision two agents
+### Test 1: Create identity and storage for two agents
 
 **Prompt OpenClaw:**
 
-> Provision two agents: "alice" with display name "Alice Agent" and "bob" with display name "Bob Agent".
+> Create WebIDs and Pods for two agents: "alice" with display name "Alice Agent" and "bob" with display name "Bob Agent".
 
 **Expected:** OpenClaw runs `scripts/provision.sh` twice. Both succeed with WebIDs and Pod URLs:
 - `http://localhost:3000/alice/profile/card#me`
@@ -132,7 +132,7 @@ Before any tests, confirm no agents are provisioned.
 
 **Then prompt:**
 
-> List all provisioned agents.
+> List all agents with provisioned WebIDs and Pods.
 
 **Expected:** OpenClaw runs `scripts/status.sh`. Both `alice` and `bob` appear.
 
@@ -409,7 +409,7 @@ Before any tests, confirm no agents are provisioned.
 
 **Prompt OpenClaw:**
 
-> Deprovision Alice as well. Then confirm no agents remain.
+> Delete Alice's WebID and Pod as well. Then confirm no agents with provisioned identity remain.
 
 **Expected:**
 - Deprovision succeeds
@@ -466,13 +466,13 @@ Open **http://localhost:18789**.
 
 **Prompt OpenClaw:**
 
-> Provision an agent called "remote-test" with display name "Remote Test Agent".
+> Create a WebID and Pod for an agent called "remote-test" with display name "Remote Test Agent".
 
 **Expected:** Succeeds with a WebID on the remote server.
 
 **Then prompt:**
 
-> Write "Hello from remote" as plain text to /agents/remote-test/memory/hello.txt. Then read it back.
+> Write "Hello from remote" as plain text to /remote-test/memory/hello.txt. Then read it back.
 
 **Expected:** OpenClaw gets a token, writes via curl, reads back the content.
 
@@ -486,17 +486,17 @@ Open **http://localhost:18789**.
 
 **Prompt OpenClaw:**
 
-> Provision a second agent called "remote-bob". Share remote-test's hello.txt with remote-bob (read access). Verify remote-bob can read it. Then revoke access and verify remote-bob is blocked.
+> Create a WebID and Pod for a second agent called "remote-bob". Share remote-test's hello.txt with remote-bob (read access). Verify remote-bob can read it. Then revoke access and verify remote-bob is blocked.
 
 **Expected:** Same flow as Tests 8–12 but against the remote server.
 
 ---
 
-### Test 21: Deprovision both remote agents
+### Test 21: Delete identity and storage for both remote agents
 
 **Prompt OpenClaw:**
 
-> Deprovision both "remote-test" and "remote-bob".
+> Delete the WebIDs and Pods for both "remote-test" and "remote-bob".
 
 **Expected:** Both report `status: "ok"`.
 
@@ -512,7 +512,7 @@ docker pause proxy
 
 **Prompt OpenClaw:**
 
-> Provision an agent called "net-fail-test". Then deprovision it.
+> Create a WebID and Pod for an agent called "net-fail-test". Then delete its WebID and Pod.
 
 **Expected for provision:** Fails — can't reach the remote CSS.
 
@@ -555,7 +555,7 @@ docker volume rm docker_openclaw-config docker_interition-creds 2>/dev/null
 
 | # | Profile | Scenario | Key assertion |
 |---|---------|----------|---------------|
-| 1 | Local | Provision two agents | Both get WebIDs and Pods |
+| 1 | Local | Create WebIDs and Pods for two agents | Both get WebIDs and Pods |
 | 2 | Local | Write Turtle via token+curl | Uses get-token.sh, not write.sh |
 | 3 | Local | Read via token+curl | Uses curl, not read.sh |
 | 4 | Local | Write plain text and JSON | Correct content types |
@@ -571,9 +571,9 @@ docker volume rm docker_openclaw-config docker_interition-creds 2>/dev/null
 | 14 | Local | SPARQL PATCH append | Original data preserved |
 | 15 | Local | Delete resource | Resource gone, others intact |
 | 16 | Local | Token expiry awareness | Fresh token fetched |
-| 17 | Local | Deprovision one agent | Credentials gone, other agent unaffected |
-| 18 | Local | Deprovision last agent, verify empty | No agents remain |
+| 17 | Local | Delete one agent's WebID and Pod | Credentials gone, other agent unaffected |
+| 18 | Local | Delete last agent's WebID and Pod | No provisioned identities remain |
 | 19 | Remote | Provision + write + read | Works over HTTPS proxy |
 | 20 | Remote | Share and unshare | ACLs work on remote CSS |
-| 21 | Remote | Deprovision both agents | Clean teardown |
+| 21 | Remote | Delete both agents' WebIDs and Pods | Clean teardown |
 | 22 | Remote | Network interruption | Partial status, local cleanup succeeds |

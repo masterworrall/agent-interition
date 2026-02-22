@@ -83,13 +83,13 @@ Wait for CSS to be ready and OpenClaw gateway to appear, then open the UI at **h
 
 **Prompt OpenClaw:**
 
-> Provision a new agent called "dogfood-test" with display name "Dogfood Test Agent".
+> Create a WebID and Pod for an agent called "dogfood-test" with display name "Dogfood Test Agent".
 
 **Expected:** OpenClaw runs `scripts/provision.sh --name dogfood-test --displayName "Dogfood Test Agent"` and reports success with a WebID and Pod URL.
 
 **Then prompt:**
 
-> Now deprovision the agent "dogfood-test".
+> Now delete the WebID and Pod for "dogfood-test".
 
 **Expected:** OpenClaw runs `scripts/deprovision.sh --name dogfood-test` and reports:
 - `status: "ok"`
@@ -101,7 +101,7 @@ Wait for CSS to be ready and OpenClaw gateway to appear, then open the UI at **h
 
 **Prompt OpenClaw:**
 
-> List all provisioned agents.
+> List all agents with provisioned WebIDs and Pods.
 
 **Expected:** OpenClaw runs `scripts/status.sh`. `dogfood-test` should not appear.
 
@@ -123,51 +123,51 @@ curl -s http://localhost:3000/dogfood-test/profile/card
 
 **Prompt OpenClaw:**
 
-> Provision an agent called "lifecycle-test". Then write "Hello from lifecycle test" as plain text to its memory at /agents/lifecycle-test/memory/hello.txt. Then read it back to confirm it's stored.
+> Create a WebID and Pod for an agent called "lifecycle-test". Then write "Hello from lifecycle test" as plain text to its memory at /lifecycle-test/memory/hello.txt. Then read it back to confirm it's stored.
 
 **Expected:** Provision succeeds, write succeeds, read returns the content.
 
 **Then prompt:**
 
-> Now deprovision "lifecycle-test" and confirm it's gone.
+> Now delete the WebID and Pod for "lifecycle-test" and confirm it's gone.
 
-**Expected:** Deprovision reports `status: "ok"`, `accountDeleted: true`. Follow-up status check shows the agent is gone.
+**Expected:** Deprovision reports `status: "ok"`, `accountDeleted: true`. Follow-up status check shows no identity or storage remains for lifecycle-test.
 
-### Test 4: Deprovision an agent that doesn't exist
+### Test 4: Delete identity and storage for an agent that doesn't exist
 
 **Prompt OpenClaw:**
 
-> Deprovision an agent called "never-created".
+> Delete the WebID and Pod for an agent called "never-created".
 
 **Expected:** OpenClaw runs the script and reports the error: `No credentials found for agent "never-created"`.
 
-### Test 5: Provision two agents, deprovision one
+### Test 5: Create identity for two agents, delete one
 
 **Prompt OpenClaw:**
 
-> Provision two agents: "keeper" and "disposable".
+> Create WebIDs and Pods for two agents: "keeper" and "disposable".
 
 **Then prompt:**
 
-> Deprovision "disposable" but keep "keeper".
+> Delete the WebID and Pod for "disposable" but keep "keeper".
 
 **Expected:** Only `disposable` is deprovisioned. Status shows `keeper` still present and functional.
 
 **Then prompt:**
 
-> Write "Still alive" to keeper's memory at /agents/keeper/memory/alive.txt and read it back.
+> Write "Still alive" to keeper's memory at /keeper/memory/alive.txt and read it back.
 
-**Expected:** Write and read succeed — `keeper` is unaffected by the other agent's deprovision.
+**Expected:** Write and read succeed — `keeper` is unaffected by deleting the other agent's identity and storage.
 
 **Cleanup:**
 
-> Deprovision "keeper".
+> Delete the WebID and Pod for "keeper".
 
 ### Test 6: Re-provision after deprovision
 
 **Prompt OpenClaw:**
 
-> Provision a new agent called "phoenix". Deprovision it. Then provision a new agent called "phoenix" again.
+> Create a WebID and Pod for an agent called "phoenix". Delete its WebID and Pod. Then create a WebID and Pod for "phoenix" again.
 
 **Expected:** The second provision succeeds cleanly — the old account components were fully deleted, so there are no conflicts with the new account.
 
@@ -195,13 +195,13 @@ Open the UI at **http://localhost:18789**.
 
 **Prompt OpenClaw:**
 
-> Provision a new agent called "remote-test".
+> Create a WebID and Pod for an agent called "remote-test".
 
 **Expected:** Succeeds against the remote server.
 
 **Then prompt:**
 
-> Deprovision "remote-test".
+> Delete the WebID and Pod for "remote-test".
 
 **Expected:** `status: "ok"`, `accountDeleted: true`.
 
@@ -242,7 +242,7 @@ Tear down:
 | **CSS account cleanup** | After deprovision, is the Pod actually gone from the server (404 on pod URL)? |
 | **Credential cleanup** | After deprovision, does `status.sh` confirm the agent is removed locally? |
 | **Graceful degradation** | When the CSS is unreachable, does local cleanup still happen with a clear warning? |
-| **Re-provisioning** | Can you provision a new agent with the same name after deprovisioning? |
+| **Re-provisioning** | Can you create a new WebID and Pod with the same name after deleting the previous ones? |
 
 ## Summary Checklist
 

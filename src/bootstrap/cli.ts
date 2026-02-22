@@ -21,7 +21,7 @@ provisionAgent({
   displayName: displayName!,
   serverUrl,
 }).then((agent) => {
-  console.log('\nProvisioned agent:');
+  console.log('\nAgent WebID and Pod created:');
   console.log(JSON.stringify(agent, null, 2));
 }).catch((err) => {
   console.error('Bootstrap failed:', err);

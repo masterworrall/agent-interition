@@ -84,9 +84,9 @@ For the full set of operations (containers, PATCH, access control, public access
 
 ## Management Commands
 
-### Provision a New Agent
+### Provision Identity and Storage
 
-Creates a WebID and Pod for an agent. Run this once per agent.
+Creates a WebID and Pod for an agent. Run this once per unique agent name.
 
 ```bash
 scripts/provision.sh --name <agent-name> [--displayName <display-name>]
@@ -102,9 +102,9 @@ scripts/provision.sh --name researcher --displayName "Research Assistant"
 {"status": "ok", "agent": "researcher", "webId": "http://localhost:3000/researcher/profile/card#me", "podUrl": "http://localhost:3000/researcher/"}
 ```
 
-### Deprovision an Agent
+### Deprovision Identity and Storage
 
-Fully removes an agent: deletes its pods, client credentials, WebID links, and password logins from the CSS server, then deletes local credential files.
+Fully removes an agent's WebID and Pod: deletes its pods, client credentials, WebID links, and password logins from the CSS server, then deletes local credential files.
 
 ```bash
 scripts/deprovision.sh --name <agent-name>
@@ -189,5 +189,5 @@ Common errors:
 - `"No passphrase provided"` — Set `INTERITION_PASSPHRASE` env var
 - `"No credentials found"` — Run `provision.sh` first
 - `"Invalid passphrase"` — Wrong `INTERITION_PASSPHRASE` value
-- `"Token request failed: 401"` — Credentials expired; re-provision the agent
+- `"Token request failed: 401"` — Credentials expired; re-provision the agent's WebID and Pod
 - `"HTTP 404"` — Resource doesn't exist at that URL

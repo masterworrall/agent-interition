@@ -7,8 +7,8 @@ const SERVER_URL = process.env.CSS_URL ?? 'http://localhost:3000';
 async function main() {
   console.log('=== Agent Interition Demo: Two Agents Sharing Data ===\n');
 
-  // Step 1: Provision two agents
-  console.log('--- Step 1: Provisioning Agent Alpha ---');
+  // Step 1: Create WebID and Pod for two agents
+  console.log('--- Step 1: Creating WebID and Pod for Alpha ---');
   const alpha = await provisionAgent({
     name: 'alpha',
     displayName: 'Agent Alpha',
@@ -16,7 +16,7 @@ async function main() {
     capabilities: ['memory', 'sharing'],
   });
 
-  console.log('\n--- Step 1: Provisioning Agent Beta ---');
+  console.log('\n--- Step 1: Creating WebID and Pod for Beta ---');
   const beta = await provisionAgent({
     name: 'beta',
     displayName: 'Agent Beta',

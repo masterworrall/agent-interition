@@ -21,15 +21,15 @@ const SERVER_URL = 'http://localhost:3000';
 async function main() {
   console.log('=== Step 3: Agent-to-Agent Sharing ===\n');
 
-  // --- Provision two agents ---
-  console.log('Provisioning Agent Dan...');
+  // --- Create WebID and Pod for two agents ---
+  console.log('Creating WebID and Pod for Dan...');
   const dan = await provisionAgent({
     name: 'dan',
     displayName: 'Dan the Data Owner',
     serverUrl: SERVER_URL,
   });
 
-  console.log('Provisioning Agent Eve...');
+  console.log('Creating WebID and Pod for Eve...');
   const eve = await provisionAgent({
     name: 'eve',
     displayName: 'Eve the Explorer',

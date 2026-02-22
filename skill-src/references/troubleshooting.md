@@ -13,23 +13,23 @@ export INTERITION_PASSPHRASE="your-passphrase-here"
 
 ### "No credentials found for agent X"
 
-**Cause:** The agent hasn't been provisioned yet, or credentials are stored under a different name.
+**Cause:** No WebID and Pod have been provisioned for this agent, or credentials are stored under a different name.
 
 **Fix:**
 1. Check existing agents: `scripts/status.sh`
-2. Provision the agent: `scripts/provision.sh --name <agent-name>`
+2. Provision a WebID and Pod: `scripts/provision.sh --name <agent-name>`
 
 ### "Invalid passphrase — cannot decrypt credentials"
 
 **Cause:** The `INTERITION_PASSPHRASE` value doesn't match the one used when the agent was provisioned.
 
-**Fix:** Use the same passphrase that was set when `provision.sh` was first run. If you've lost the passphrase, you'll need to re-provision the agent (which creates a new WebID and Pod).
+**Fix:** Use the same passphrase that was set when `provision.sh` was first run. If you've lost the passphrase, you'll need to re-provision the agent's WebID and Pod (which creates new identity and storage).
 
 ### "Token request failed: 401"
 
 **Cause:** The client credentials stored for this agent are invalid or the CSS server has been reset.
 
-**Fix:** Re-provision the agent with `scripts/provision.sh --name <agent-name>`.
+**Fix:** Re-provision the agent's WebID and Pod with `scripts/provision.sh --name <agent-name>`.
 
 ### Expired token (HTTP 401 on curl requests)
 

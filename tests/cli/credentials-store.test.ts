@@ -66,7 +66,7 @@ describe('credentials-store', () => {
     expect(mode).toBe(0o600);
   });
 
-  it('lists provisioned agents', () => {
+  it('lists agents with provisioned WebIDs and Pods', () => {
     initStore('my-secret-passphrase');
     saveCredentials('alpha', testCreds);
     saveCredentials('beta', { ...testCreds, webId: testCreds.webId.replace('alpha', 'beta') });

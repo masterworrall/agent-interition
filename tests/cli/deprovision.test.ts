@@ -55,7 +55,7 @@ describe('deprovision', () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('deletes CSS account and local credentials for fully provisioned agent', async () => {
+  it('deletes CSS account and local credentials for an agent with provisioned WebID and Pod', async () => {
     saveCredentials('alpha', fullCreds);
     mockLoginWithPassword.mockResolvedValue('session-cookie');
     mockDeleteAccount.mockResolvedValue(undefined);

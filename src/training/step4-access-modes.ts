@@ -20,7 +20,7 @@ const SERVER_URL = 'http://localhost:3000';
 async function main() {
   console.log('=== Step 4: Access Modes Deep Dive ===\n');
 
-  // --- Provision two agents ---
+  // --- Create WebID and Pod for two agents ---
   const frank = await provisionAgent({
     name: 'frank', displayName: 'Frank', serverUrl: SERVER_URL,
   });

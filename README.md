@@ -35,7 +35,7 @@ For clarity we use a Docker architecture with OpenClaw and the Community Solid S
 └──────────────────────────────────────────────────────────────┘
 ```
 
-A [Community Solid Server](https://github.com/CommunitySolidServer/CommunitySolidServer) (CSS) runs in Docker alongside OpenClaw. The Skill gives OpenClaw shell scripts to provision agents and get auth tokens. OpenClaw then uses standard HTTP (`curl`) with Bearer tokens for all Solid operations — reading, writing, deleting, and sharing data.
+A [Community Solid Server](https://github.com/CommunitySolidServer/CommunitySolidServer) (CSS) runs in Docker alongside OpenClaw. The Skill gives OpenClaw shell scripts to provision WebIDs and Pods and get auth tokens. OpenClaw then uses standard HTTP (`curl`) with Bearer tokens for all Solid operations — reading, writing, deleting, and sharing data.
 
 Docker profiles are available for local and remote CSS use:
 - **Local mode** — runs CSS alongside OpenClaw in a shared network namespace
@@ -118,10 +118,10 @@ Go to `http://localhost:18789` in your browser. Enter your gateway token when pr
 
 Ask OpenClaw to use the Skill:
 
-1. **"Provision an agent called alpha with display name Agent Alpha"**
+1. **"Create a WebID and Pod for an agent called alpha with display name Agent Alpha"**
 2. **"Write a note to alpha's memory"**
 3. **"Read alpha's memory"**
-4. **"Provision a second agent called beta, then grant beta read access to alpha's shared data"**
+4. **"Create a WebID and Pod for a second agent called beta, then grant beta read access to alpha's shared data"**
 
 OpenClaw reads the Skill's instructions and figures out which scripts to run and what curl commands to use.
 
@@ -129,12 +129,12 @@ OpenClaw reads the Skill's instructions and figures out which scripts to run and
 
 Once the Skill is installed, OpenClaw can:
 
-- **Provision an Identity and a Store for itself** — create a WebID, Pod, and credentials for a named agent
-- **Deprovision Identities and Store** — fully tear down an agent's CSS account and local credentials
+- **Provision identity and storage** — create a WebID, Pod, and credentials for a named agent
+- **Deprovision identity and storage** — fully tear down an agent's CSS account and local credentials
 - **Store and retrieve data** — write Turtle (RDF) or any content to Pods and read it back
 - **Share data** — grant another agent read or write access to specific resources using WAC
 - **Revoke access** — remove previously granted permissions
-- **Check status** — list all provisioned WebId and their Pods
+- **Check status** — list all agents with provisioned WebIDs and Pods
 
 OpenClaw reads `SKILL.md` and the reference docs bundled in the Skill package. It uses the management scripts for provisioning/deprovisioning, gets Bearer tokens via the token helper, and uses `curl` for all standard Solid operations. See `references/solid-http-reference.md` in the Skill package for the full set of operations including containers, SPARQL PATCH, and WAC access control.
 
@@ -201,7 +201,7 @@ For contributors and maintainers.
 | Command | Description |
 |---------|-------------|
 | `npm run css:start` | Start Community Solid Server on port 3000 |
-| `npm run bootstrap -- --name <n>` | Provision an agent (dev workflow) |
+| `npm run bootstrap -- --name <n>` | Provision a WebID and Pod (dev workflow) |
 | `npm run demo` | Run the two-agent sharing demo |
 | `npm test` | Run unit tests |
 | `CSS_URL=http://localhost:3000 npm test` | Run unit + integration tests |
@@ -231,7 +231,7 @@ npm run demo
 Output:
 
 ```
-1. Provision Agent Alpha + Agent Beta
+1. Create WebID + Pod for Agent Alpha and Agent Beta
 2. Alpha writes greeting.ttl to /shared/
 3. Beta tries to read → 403 (no access)
 4. Alpha grants Beta read access via WAC

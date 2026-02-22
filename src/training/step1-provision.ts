@@ -1,5 +1,5 @@
 /**
- * Training Step 1: Provision an agent programmatically
+ * Training Step 1: Provision a WebID and Pod programmatically
  *
  * This does the same thing as:
  *   npm run bootstrap -- --name bob --displayName "Bob the Builder"
@@ -11,7 +11,7 @@ import { provisionAgent } from '../bootstrap/index.js';
 const SERVER_URL = 'http://localhost:3000';
 
 async function main() {
-  console.log('=== Step 1: Provisioning Agent Bob ===\n');
+  console.log('=== Step 1: Creating WebID and Pod for Bob ===\n');
 
   const bob = await provisionAgent({
     name: 'bob',

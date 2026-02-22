@@ -94,11 +94,11 @@ You now have two independent OpenClaw agents, each in its own container with its
 
 Each step shows a **prompt you type into the OpenClaw UI**. The agent reads SKILL.md and figures out the right commands. Expected outcomes are shown so you can verify each step worked.
 
-### Step 1: Provision Alpha
+### Step 1: Create Alpha's identity and storage
 
 **Tell Alpha (port 18789):**
 
-> Provision a new Solid agent called "alpha" with display name "Alpha Agent".
+> Create a WebID and Pod for an agent called "alpha" with display name "Alpha Agent".
 
 **Expected:** The agent runs `scripts/provision.sh` and reports Alpha's WebID and Pod URL.
 
@@ -107,13 +107,13 @@ Note Alpha's WebID — you'll need it in a moment:
 http://localhost:3000/alpha/profile/card#me
 ```
 
-### Step 2: Provision Beta
+### Step 2: Create Beta's identity and storage
 
 **Tell Beta (port 18790):**
 
-> Provision a new Solid agent called "beta" with display name "Beta Agent".
+> Create a WebID and Pod for an agent called "beta" with display name "Beta Agent".
 
-**Expected:** The agent provisions Beta and reports its WebID:
+**Expected:** The agent creates Beta's WebID and Pod, and reports its WebID:
 ```
 http://localhost:3000/beta/profile/card#me
 ```
@@ -220,8 +220,8 @@ http://localhost:3000/beta/profile/card#me
 
 | Step | Who | Prompt (short form) | Expected |
 |------|-----|---------------------|----------|
-| 1 | Alpha | Provision alpha | WebID + Pod created |
-| 2 | Beta | Provision beta | WebID + Pod created |
+| 1 | Alpha | Create WebID + Pod for alpha | WebID + Pod created |
+| 2 | Beta | Create WebID + Pod for beta | WebID + Pod created |
 | 3 | Alpha | Write findings to alpha's Pod | Resource created |
 | 4 | Alpha | Read alpha's findings | Content returned |
 | 5 | Beta | Read alpha's findings as beta | 403 Forbidden |
@@ -237,11 +237,11 @@ http://localhost:3000/beta/profile/card#me
 
 **Tell Alpha:**
 
-> Deprovision the agent called "alpha".
+> Delete the WebID and Pod for the agent called "alpha".
 
 **Tell Beta:**
 
-> Deprovision the agent called "beta".
+> Delete the WebID and Pod for the agent called "beta".
 
 Then tear down the stack:
 

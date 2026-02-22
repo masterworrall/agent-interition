@@ -155,7 +155,7 @@ This returns RDF (Linked Data). The profile says things like:
 
 ---
 
-## Part 5: Write Code — Provision an Agent Programmatically
+## Part 5: Write Code — Provision a WebID and Pod Programmatically
 
 Create a new file to do what the CLI did, but in code:
 
@@ -167,7 +167,7 @@ Paste this into `src/training/step1-provision.ts`:
 
 ```typescript
 /**
- * Training Step 1: Provision an agent programmatically
+ * Training Step 1: Provision a WebID and Pod programmatically
  *
  * This does the same thing as:
  *   npm run bootstrap -- --name bob --displayName "Bob the Builder"
@@ -344,7 +344,7 @@ const SERVER_URL = 'http://localhost:3000';
 async function main() {
   console.log('=== Step 3: Agent-to-Agent Sharing ===\n');
 
-  // --- Provision two agents ---
+  // --- Create WebID and Pod for two agents ---
   console.log('Provisioning Agent Dan...');
   const dan = await provisionAgent({
     name: 'dan',
@@ -485,7 +485,7 @@ const SERVER_URL = 'http://localhost:3000';
 async function main() {
   console.log('=== Step 4: Access Modes Deep Dive ===\n');
 
-  // --- Provision two agents ---
+  // --- Create WebID and Pod for two agents ---
   const frank = await provisionAgent({
     name: 'frank', displayName: 'Frank', serverUrl: SERVER_URL,
   });
