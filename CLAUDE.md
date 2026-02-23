@@ -25,7 +25,7 @@ The mission: Give AI agents portable identity (WebID) and personal data storage 
 ### Brand
 
 - **Product name:** Solid Agent Storage (the OpenClaw Skill on ClawHub)
-- **Platform domain:** crawlout.io (acquired, not yet public — do not reference in README or public-facing docs until launched)
+- **Platform domain:** crawlout.io (live, deployed by Seven 2026-02-23, running Community Solid Server)
 
 ## Development Commands
 

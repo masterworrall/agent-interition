@@ -92,11 +92,22 @@ ClawHub's automated validation flagged several issues on initial submission:
 | `SECURITY.md` | Replaced "Local only" with accurate description of configurable `SOLID_SERVER_URL`. Added trust warning. |
 | `SKILL.md` | Clarified CSS is a prerequisite (not bundled). Added link to source repo. Added `SOLID_SERVER_URL` trust warning. Bumped version to 0.1.1. |
 
+## Changes Made (v0.3.3)
+
+| File | Change |
+|------|--------|
+| `SKILL.md` | Restructured frontmatter to `metadata.openclaw` format. Added `jq` to required bins, `primaryEnv`, brew install spec. Rewrote Setup to recommend self-hosted CSS. Added "How Credentials Work" section. Bumped version to 0.3.3. |
+| `clawhub-push.sh` | Updated version and changelog. |
+| `CLAUDE.md` | Updated crawlout.io status to live. |
+| `docs/clawhub-upload-checklist.md` | New file — checklist for ClawHub publish workflow. |
+
+**Registry metadata fix:** Frontmatter restructured from `metadata.requires` to `metadata.openclaw.requires` to match the ClawHub spec. The `jq` binary was also missing from the `bins` declaration despite being used in Quick Reference examples. Added "How Credentials Work" section to clarify the standard trust model for authenticated remote services.
+
 ## Re-upload Checklist
 
 - [x] Fix SECURITY.md network claims
 - [x] Fix SKILL.md setup prerequisites
 - [x] Bump version to 0.1.1
-- [ ] Re-upload to ClawHub with correct registry metadata (bins, env vars)
-- [ ] Verify registry classification reflects executable package (not instruction-only)
+- [x] Re-upload to ClawHub with correct registry metadata (bins, env vars)
+- [x] Verify registry classification reflects executable package (not instruction-only)
 - [ ] Confirm validation passes clean

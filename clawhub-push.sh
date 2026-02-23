@@ -1,1 +1,1 @@
-clawhub publish ./skill/solid-agent-storage --slug solid-agent-storage --name "Solid Agent Storage" --version 0.1.1 --changelog "Fix security claims: clarify configurable server target, clarify CSS prerequisite, strip source maps" --tags latest
+clawhub publish ./skill/solid-agent-storage --slug solid-agent-storage --name "Solid Agent Storage" --version 0.3.3 --changelog "Fix registry metadata mismatch: restructure frontmatter to metadata.openclaw format, add jq to required bins, add primaryEnv and brew install spec, recommend self-hosted CSS as default" --tags latest
