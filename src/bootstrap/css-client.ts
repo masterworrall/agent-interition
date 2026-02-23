@@ -160,13 +160,15 @@ export async function deleteAccount(serverUrl: string, cookie: string): Promise<
     await deleteAllResources(controls.password.create, cookie);
   }
 
-  // 5. Logout to invalidate the session
-  if (controls.account?.logout) {
-    await fetch(controls.account.logout, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', cookie },
-      body: '{}',
+  // 5. Delete the account itself
+  if (controls.account?.account) {
+    const res = await fetch(controls.account.account, {
+      method: 'DELETE',
+      headers: { cookie },
     });
+    if (!res.ok) {
+      throw new Error(`Failed to delete account: ${res.status} ${await res.text()}`);
+    }
   }
 }
 
@@ -193,6 +195,7 @@ async function deleteAllResources(listUrl: string, cookie: string): Promise<void
 interface Controls {
   password?: { create?: string; login?: string };
   account?: {
+    account?: string;
     pod?: string;
     clientCredentials?: string;
     webId?: string;
