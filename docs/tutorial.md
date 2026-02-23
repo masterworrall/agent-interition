@@ -60,28 +60,28 @@ That's it. You're ready.
 
 ## Part 1: Give Your Agent an Identity
 
-Let's create an agent called `researcher` with a display name of "Research Assistant":
+Let's create an agent called `example-agent` with a display name of "Example Agent":
 
 ```bash
-node dist/cli/provision.js --name researcher --displayName "Research Assistant"
+node dist/cli/provision.js --name example-agent --displayName "Example Agent"
 ```
 
 You should see:
 
 ```json
-{"status":"ok","agent":"researcher","webId":"http://localhost:3000/researcher/profile/card#me","podUrl":"http://localhost:3000/researcher/"}
+{"status":"ok","agent":"example-agent","webId":"http://localhost:3000/example-agent/profile/card#me","podUrl":"http://localhost:3000/example-agent/"}
 ```
 
 What just happened:
 
-1. A **WebID** was created — `http://localhost:3000/researcher/profile/card#me`. This is your agent's identity on the web. Any other agent or service can look up this URL to find out who it is.
-2. A **Pod** was created at `http://localhost:3000/researcher/`. This is your agent's personal data store, with containers for `/memory/`, `/shared/`, and `/conversations/`.
-3. **Client credentials** were generated and encrypted on disk at `~/.interition/agents/researcher/credentials.enc`. These let your agent authenticate to its Pod without a password prompt.
+1. A **WebID** was created — `http://localhost:3000/example-agent/profile/card#me`. This is your agent's identity on the web. Any other agent or service can look up this URL to find out who it is.
+2. A **Pod** was created at `http://localhost:3000/example-agent/`. This is your agent's personal data store, with containers for `/memory/`, `/shared/`, and `/conversations/`.
+3. **Client credentials** were generated and encrypted on disk at `~/.interition/agents/example-agent/credentials.enc`. These let your agent authenticate to its Pod without a password prompt.
 
 You can verify the WebID profile is publicly accessible:
 
 ```bash
-curl -H "Accept: text/turtle" http://localhost:3000/researcher/profile/card
+curl -H "Accept: text/turtle" http://localhost:3000/example-agent/profile/card
 ```
 
 You'll see a Turtle document describing your agent — its name, its type (`foaf:Agent`), and links to its Pod.
@@ -91,25 +91,25 @@ You'll see a Turtle document describing your agent — its name, its type (`foaf
 ### Write a plain-text note
 
 ```bash
-node dist/cli/write.js --agent researcher \
-  --url "http://localhost:3000/researcher/memory/todo.txt" \
+node dist/cli/write.js --agent example-agent \
+  --url "http://localhost:3000/example-agent/memory/todo.txt" \
   --content "Buy more GPU credits" \
   --content-type "text/plain"
 ```
 
 ```json
-{"status":"ok","url":"http://localhost:3000/researcher/memory/todo.txt","contentType":"text/plain","httpStatus":205}
+{"status":"ok","url":"http://localhost:3000/example-agent/memory/todo.txt","contentType":"text/plain","httpStatus":205}
 ```
 
 ### Read it back
 
 ```bash
-node dist/cli/read.js --agent researcher \
-  --url "http://localhost:3000/researcher/memory/todo.txt"
+node dist/cli/read.js --agent example-agent \
+  --url "http://localhost:3000/example-agent/memory/todo.txt"
 ```
 
 ```json
-{"status":"ok","url":"http://localhost:3000/researcher/memory/todo.txt","contentType":"text/plain","body":"Buy more GPU credits"}
+{"status":"ok","url":"http://localhost:3000/example-agent/memory/todo.txt","contentType":"text/plain","body":"Buy more GPU credits"}
 ```
 
 The data is stored in the agent's Pod on the Solid server. Restart the server, restart your machine — the data persists.
@@ -119,8 +119,8 @@ The data is stored in the agent's Pod on the Solid server. Restart the server, r
 Plain text works, but Turtle (RDF) lets agents store structured, linked data that's machine-readable:
 
 ```bash
-node dist/cli/write.js --agent researcher \
-  --url "http://localhost:3000/researcher/memory/preferences.ttl" \
+node dist/cli/write.js --agent example-agent \
+  --url "http://localhost:3000/example-agent/memory/preferences.ttl" \
   --content '@prefix schema: <http://schema.org/>.
 <#pref-1> a schema:PropertyValue;
   schema:name "summary-style";
@@ -132,7 +132,7 @@ node dist/cli/write.js --agent researcher \
 ```
 
 ```json
-{"status":"ok","url":"http://localhost:3000/researcher/memory/preferences.ttl","contentType":"text/turtle","httpStatus":205}
+{"status":"ok","url":"http://localhost:3000/example-agent/memory/preferences.ttl","contentType":"text/turtle","httpStatus":205}
 ```
 
 Now your agent's preferences survive across sessions. Any time it starts up, it can read `preferences.ttl` and know how the user likes their summaries.
@@ -144,8 +144,8 @@ This is where things get interesting. We'll provision three agents that work tog
 ### Set up the team
 
 ```bash
-node dist/cli/provision.js --name writer --displayName "Content Writer"
-node dist/cli/provision.js --name reviewer --displayName "Review Editor"
+node dist/cli/provision.js --name example-collaborator --displayName "Example Collaborator"
+node dist/cli/provision.js --name example-reader --displayName "Example Reader"
 ```
 
 Check that all three agents are provisioned:
@@ -158,20 +158,20 @@ node dist/cli/status.js
 {
   "status": "ok",
   "agents": [
-    { "name": "researcher", "webId": "http://localhost:3000/researcher/profile/card#me", "podUrl": "http://localhost:3000/researcher/" },
-    { "name": "writer", "webId": "http://localhost:3000/writer/profile/card#me", "podUrl": "http://localhost:3000/writer/" },
-    { "name": "reviewer", "webId": "http://localhost:3000/reviewer/profile/card#me", "podUrl": "http://localhost:3000/reviewer/" }
+    { "name": "example-agent", "webId": "http://localhost:3000/example-agent/profile/card#me", "podUrl": "http://localhost:3000/example-agent/" },
+    { "name": "example-collaborator", "webId": "http://localhost:3000/example-collaborator/profile/card#me", "podUrl": "http://localhost:3000/example-collaborator/" },
+    { "name": "example-reader", "webId": "http://localhost:3000/example-reader/profile/card#me", "podUrl": "http://localhost:3000/example-reader/" }
   ]
 }
 ```
 
-### Researcher publishes findings
+### First agent publishes findings
 
-The researcher writes findings to its `/shared/` container:
+The example-agent writes findings to its `/shared/` container:
 
 ```bash
-node dist/cli/write.js --agent researcher \
-  --url "http://localhost:3000/researcher/shared/findings.ttl" \
+node dist/cli/write.js --agent example-agent \
+  --url "http://localhost:3000/example-agent/shared/findings.ttl" \
   --content '@prefix schema: <http://schema.org/>.
 <#finding-1> a schema:Dataset;
   schema:name "API Performance Analysis";
@@ -180,24 +180,24 @@ node dist/cli/write.js --agent researcher \
   --content-type "text/turtle"
 ```
 
-### Writer and reviewer try to read — both blocked
+### Collaborator and reader try to read — both blocked
 
 By default, only the owner can access their Pod resources. Let's verify:
 
 ```bash
-node dist/cli/read.js --agent writer \
-  --url "http://localhost:3000/researcher/shared/findings.ttl"
+node dist/cli/read.js --agent example-collaborator \
+  --url "http://localhost:3000/example-agent/shared/findings.ttl"
 ```
 
 ```json
 {"error":"HTTP 403","body":"..."}
 ```
 
-The writer gets a 403 Forbidden. Same for the reviewer:
+The example-collaborator gets a 403 Forbidden. Same for the example-reader:
 
 ```bash
-node dist/cli/read.js --agent reviewer \
-  --url "http://localhost:3000/researcher/shared/findings.ttl"
+node dist/cli/read.js --agent example-reader \
+  --url "http://localhost:3000/example-agent/shared/findings.ttl"
 ```
 
 ```json
@@ -208,42 +208,42 @@ Good. The data is private by default.
 
 ### Grant differentiated access
 
-Now the researcher grants access — but with different permissions for each agent:
+Now the example-agent grants access — but with different permissions for each agent:
 
-**Writer gets Read + Write** (can read and update the findings):
+**Collaborator gets Read + Write** (can read and update the findings):
 
 ```bash
-node dist/cli/grant-access.js --agent researcher \
-  --resource "http://localhost:3000/researcher/shared/findings.ttl" \
-  --grantee "http://localhost:3000/writer/profile/card#me" \
+node dist/cli/grant-access.js --agent example-agent \
+  --resource "http://localhost:3000/example-agent/shared/findings.ttl" \
+  --grantee "http://localhost:3000/example-collaborator/profile/card#me" \
   --modes "Read,Write"
 ```
 
-**Reviewer gets Read only** (can view but not modify):
+**Reader gets Read only** (can view but not modify):
 
 ```bash
-node dist/cli/grant-access.js --agent researcher \
-  --resource "http://localhost:3000/researcher/shared/findings.ttl" \
-  --grantee "http://localhost:3000/reviewer/profile/card#me" \
+node dist/cli/grant-access.js --agent example-agent \
+  --resource "http://localhost:3000/example-agent/shared/findings.ttl" \
+  --grantee "http://localhost:3000/example-reader/profile/card#me" \
   --modes "Read"
 ```
 
-### Writer reads and updates — success
+### Collaborator reads and updates — success
 
 ```bash
-node dist/cli/read.js --agent writer \
-  --url "http://localhost:3000/researcher/shared/findings.ttl"
+node dist/cli/read.js --agent example-collaborator \
+  --url "http://localhost:3000/example-agent/shared/findings.ttl"
 ```
 
 ```json
-{"status":"ok","url":"http://localhost:3000/researcher/shared/findings.ttl","contentType":"text/turtle","body":"@prefix schema: ..."}
+{"status":"ok","url":"http://localhost:3000/example-agent/shared/findings.ttl","contentType":"text/turtle","body":"@prefix schema: ..."}
 ```
 
-The writer can also update the findings (they have Write access):
+The example-collaborator can also update the findings (they have Write access):
 
 ```bash
-node dist/cli/write.js --agent writer \
-  --url "http://localhost:3000/researcher/shared/findings.ttl" \
+node dist/cli/write.js --agent example-collaborator \
+  --url "http://localhost:3000/example-agent/shared/findings.ttl" \
   --content '@prefix schema: <http://schema.org/>.
 <#finding-1> a schema:Dataset;
   schema:name "API Performance Analysis";
@@ -253,25 +253,25 @@ node dist/cli/write.js --agent writer \
 ```
 
 ```json
-{"status":"ok","url":"http://localhost:3000/researcher/shared/findings.ttl","contentType":"text/turtle","httpStatus":205}
+{"status":"ok","url":"http://localhost:3000/example-agent/shared/findings.ttl","contentType":"text/turtle","httpStatus":205}
 ```
 
-### Reviewer reads — success; tries to write — blocked
+### Reader reads — success; tries to write — blocked
 
 ```bash
-node dist/cli/read.js --agent reviewer \
-  --url "http://localhost:3000/researcher/shared/findings.ttl"
+node dist/cli/read.js --agent example-reader \
+  --url "http://localhost:3000/example-agent/shared/findings.ttl"
 ```
 
 ```json
-{"status":"ok","url":"http://localhost:3000/researcher/shared/findings.ttl","contentType":"text/turtle","body":"@prefix schema: ..."}
+{"status":"ok","url":"http://localhost:3000/example-agent/shared/findings.ttl","contentType":"text/turtle","body":"@prefix schema: ..."}
 ```
 
-But the reviewer cannot modify the findings:
+But the example-reader cannot modify the findings:
 
 ```bash
-node dist/cli/write.js --agent reviewer \
-  --url "http://localhost:3000/researcher/shared/findings.ttl" \
+node dist/cli/write.js --agent example-reader \
+  --url "http://localhost:3000/example-agent/shared/findings.ttl" \
   --content "Unauthorized edit attempt" \
   --content-type "text/plain"
 ```
@@ -284,34 +284,34 @@ Read-only means read-only.
 
 ### Revoke access
 
-The researcher decides the writer's work is done and revokes their access:
+The example-agent decides the example-collaborator's work is done and revokes their access:
 
 ```bash
-node dist/cli/revoke-access.js --agent researcher \
-  --resource "http://localhost:3000/researcher/shared/findings.ttl" \
-  --grantee "http://localhost:3000/writer/profile/card#me"
+node dist/cli/revoke-access.js --agent example-agent \
+  --resource "http://localhost:3000/example-agent/shared/findings.ttl" \
+  --grantee "http://localhost:3000/example-collaborator/profile/card#me"
 ```
 
-Now the writer is blocked again:
+Now the example-collaborator is blocked again:
 
 ```bash
-node dist/cli/read.js --agent writer \
-  --url "http://localhost:3000/researcher/shared/findings.ttl"
+node dist/cli/read.js --agent example-collaborator \
+  --url "http://localhost:3000/example-agent/shared/findings.ttl"
 ```
 
 ```json
 {"error":"HTTP 403","body":"..."}
 ```
 
-But the reviewer still has access — each agent's permissions are independent:
+But the example-reader still has access — each agent's permissions are independent:
 
 ```bash
-node dist/cli/read.js --agent reviewer \
-  --url "http://localhost:3000/researcher/shared/findings.ttl"
+node dist/cli/read.js --agent example-reader \
+  --url "http://localhost:3000/example-agent/shared/findings.ttl"
 ```
 
 ```json
-{"status":"ok","url":"http://localhost:3000/researcher/shared/findings.ttl","contentType":"text/turtle","body":"@prefix schema: ..."}
+{"status":"ok","url":"http://localhost:3000/example-agent/shared/findings.ttl","contentType":"text/turtle","body":"@prefix schema: ..."}
 ```
 
 This is the key insight: access control is **per-resource, per-agent, per-mode**. Not all-or-nothing. You grant exactly what's needed, and revoke it the moment it's not.
@@ -329,9 +329,9 @@ LOCAL SHARING (what we just did)
   ┌──────────────────────────────────┐
   │  Your Machine                    │
   │                                  │
-  │  researcher ─┐                   │
-  │  writer ─────┼── localhost:3000  │
-  │  reviewer ───┘                   │
+  │  example-agent ─┐                   │
+  │  example-collaborator ─────┼── localhost:3000  │
+  │  example-reader ───┘                   │
   │                                  │
   └──────────────────────────────────┘
 
@@ -345,7 +345,7 @@ REMOTE SHARING (what's coming)
   ┌──────────────┐       ┌──────────────┐
   │  Your Machine│       │  Their Machine│
   │              │       │               │
-  │  researcher  │◄─────►│  analyst      │
+  │  example-agent  │◄─────►│  analyst      │
   │  Pod + WebID │  WAC  │  Pod + WebID  │
   │              │       │               │
   └──────┬───────┘       └───────┬───────┘
@@ -368,9 +368,9 @@ Remote sharing via Cloudflare tunnels is planned for Phase 3. The protocol layer
 
 Let's step back and name the concepts you've been using:
 
-**WebID** — A URL that identifies an agent. Like `http://localhost:3000/researcher/profile/card#me`. Anyone can look up this URL to find the agent's profile. It's a W3C standard.
+**WebID** — A URL that identifies an agent. Like `http://localhost:3000/example-agent/profile/card#me`. Anyone can look up this URL to find the agent's profile. It's a W3C standard.
 
-**Pod** — A personal data store at a URL like `http://localhost:3000/researcher/`. It holds containers (like folders) and resources (like files). The agent that owns a Pod has full control over what's in it and who can access it.
+**Pod** — A personal data store at a URL like `http://localhost:3000/example-agent/`. It holds containers (like folders) and resources (like files). The agent that owns a Pod has full control over what's in it and who can access it.
 
 **WAC (Web Access Control)** — The permission system. Each resource can have an Access Control List that specifies exactly who can Read, Write, Append, or Control it. Permissions are per-resource and per-agent.
 
@@ -403,9 +403,9 @@ To remove everything from this tutorial:
 # Stop the Solid server (Ctrl+C in its terminal)
 
 # Remove agent credentials
-rm -rf ~/.interition/agents/researcher
-rm -rf ~/.interition/agents/writer
-rm -rf ~/.interition/agents/reviewer
+rm -rf ~/.interition/agents/example-agent
+rm -rf ~/.interition/agents/example-collaborator
+rm -rf ~/.interition/agents/example-reader
 
 # Remove server data
 rm -rf .solid-data

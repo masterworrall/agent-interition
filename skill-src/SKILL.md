@@ -47,7 +47,7 @@ scripts/get-token.sh --agent <name>
 
 Output:
 ```json
-{"token": "eyJhbG...", "expiresIn": 600, "serverUrl": "https://crawlout.io", "podUrl": "https://crawlout.io/researcher/", "webId": "https://crawlout.io/researcher/profile/card#me"}
+{"token": "eyJhbG...", "expiresIn": 600, "serverUrl": "https://crawlout.io", "podUrl": "https://crawlout.io/example-agent/", "webId": "https://crawlout.io/example-agent/profile/card#me"}
 ```
 
 **Step 2:** Use curl with `Authorization: Bearer $TOKEN` for any Solid operation.
@@ -60,7 +60,7 @@ Tokens last **600 seconds** (10 minutes). If more than **8 minutes** have elapse
 
 Extract token and URLs:
 ```bash
-TOKEN_JSON=$(scripts/get-token.sh --agent researcher)
+TOKEN_JSON=$(scripts/get-token.sh --agent example-agent)
 TOKEN=$(echo "$TOKEN_JSON" | jq -r '.token')
 POD_URL=$(echo "$TOKEN_JSON" | jq -r '.podUrl')
 ```
@@ -101,12 +101,12 @@ scripts/provision.sh --name <agent-name> [--displayName <display-name>]
 
 **Example:**
 ```bash
-scripts/provision.sh --name researcher --displayName "Research Assistant"
+scripts/provision.sh --name example-agent --displayName "Example Agent"
 ```
 
 **Output:**
 ```json
-{"status": "ok", "agent": "researcher", "webId": "https://crawlout.io/researcher/profile/card#me", "podUrl": "https://crawlout.io/researcher/"}
+{"status": "ok", "agent": "example-agent", "webId": "https://crawlout.io/example-agent/profile/card#me", "podUrl": "https://crawlout.io/example-agent/"}
 ```
 
 ### Deprovision Identity and Storage
@@ -119,17 +119,17 @@ scripts/deprovision.sh --name <agent-name>
 
 **Example:**
 ```bash
-scripts/deprovision.sh --name researcher
+scripts/deprovision.sh --name example-agent
 ```
 
 **Output (success):**
 ```json
-{"status": "ok", "agent": "researcher", "accountDeleted": true, "credentialsDeleted": true}
+{"status": "ok", "agent": "example-agent", "accountDeleted": true, "credentialsDeleted": true}
 ```
 
 **Output (partial — e.g. server unreachable):**
 ```json
-{"status": "partial", "agent": "researcher", "accountDeleted": false, "credentialsDeleted": true, "warnings": ["Could not delete CSS account: ..."]}
+{"status": "partial", "agent": "example-agent", "accountDeleted": false, "credentialsDeleted": true, "warnings": ["Could not delete CSS account: ..."]}
 ```
 
 - `status: "ok"` — CSS account fully dismantled and local files deleted

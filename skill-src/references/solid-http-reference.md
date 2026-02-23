@@ -4,8 +4,8 @@ Concrete curl examples for all standard Solid Protocol operations. All examples 
 
 ```bash
 TOKEN="eyJhbG..."
-POD_URL="https://crawlout.io/researcher/"
-WEBID="https://crawlout.io/researcher/profile/card#me"
+POD_URL="https://crawlout.io/example-agent/"
+WEBID="https://crawlout.io/example-agent/profile/card#me"
 SERVER_URL="https://crawlout.io"
 ```
 
@@ -14,13 +14,13 @@ SERVER_URL="https://crawlout.io"
 Get a Bearer token:
 
 ```bash
-eval "$(scripts/get-token.sh --agent researcher | jq -r '"TOKEN=\(.token)\nPOD_URL=\(.podUrl)\nWEBID=\(.webId)\nSERVER_URL=\(.serverUrl)"')"
+eval "$(scripts/get-token.sh --agent example-agent | jq -r '"TOKEN=\(.token)\nPOD_URL=\(.podUrl)\nWEBID=\(.webId)\nSERVER_URL=\(.serverUrl)"')"
 ```
 
 Or capture the JSON and extract fields manually:
 
 ```bash
-TOKEN_JSON=$(scripts/get-token.sh --agent researcher)
+TOKEN_JSON=$(scripts/get-token.sh --agent example-agent)
 TOKEN=$(echo "$TOKEN_JSON" | jq -r '.token')
 POD_URL=$(echo "$TOKEN_JSON" | jq -r '.podUrl')
 WEBID=$(echo "$TOKEN_JSON" | jq -r '.webId')
@@ -156,7 +156,7 @@ curl -s -I -H "Authorization: Bearer $TOKEN" \
 
 The `Link` header contains the ACL URL, e.g.:
 ```
-Link: <https://crawlout.io/researcher/shared/report.ttl.acl>; rel="acl"
+Link: <https://crawlout.io/example-agent/shared/report.ttl.acl>; rel="acl"
 ```
 
 If no ACL link is returned, the convention is to append `.acl` to the resource URL.
@@ -176,7 +176,7 @@ Write a complete ACL document. **Always include an owner rule** so you don't loc
 
 ```bash
 ACL_URL="${POD_URL}shared/report.ttl.acl"
-GRANTEE_WEBID="https://crawlout.io/writer/profile/card#me"
+GRANTEE_WEBID="https://crawlout.io/example-collaborator/profile/card#me"
 RESOURCE_URL="${POD_URL}shared/report.ttl"
 
 curl -s -X PUT \
