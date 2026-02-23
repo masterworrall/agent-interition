@@ -4,12 +4,46 @@ set -euo pipefail
 # Smoke test for a Community Solid Server
 #
 # Tests the full lifecycle: create account → get token → write → read → delete → teardown
-#
-# Usage:
-#   ./scripts/smoke-test.sh                        # tests https://crawlout.io
-#   ./scripts/smoke-test.sh http://localhost:3000   # tests local server
 
-SERVER="${1:-https://crawlout.io}"
+usage() {
+  echo "Usage: $0 <server-url> [options]"
+  echo ""
+  echo "Arguments:"
+  echo "  <server-url>            Solid server URL (e.g. https://crawlout.io, http://localhost:3000)"
+  echo ""
+  echo "Options:"
+  echo "  --dont-delete-account   Leave the test account on the server after the test"
+  echo "  --help                  Show this help message"
+  echo ""
+  echo "Examples:"
+  echo "  $0 http://localhost:3000"
+  echo "  $0 https://crawlout.io"
+  echo "  $0 http://localhost:3000 --dont-delete-account"
+  exit 0
+}
+
+if [ $# -eq 0 ]; then
+  usage
+fi
+
+DELETE_ACCOUNT=true
+SERVER=""
+
+for arg in "$@"; do
+  case "$arg" in
+    --help|-h) usage ;;
+    --dont-delete-account) DELETE_ACCOUNT=false ;;
+    -*) echo "Unknown option: $arg" >&2; echo "Run '$0 --help' for usage." >&2; exit 1 ;;
+    *) SERVER="$arg" ;;
+  esac
+done
+
+if [ -z "$SERVER" ]; then
+  echo "Error: server URL is required." >&2
+  echo "Run '$0 --help' for usage." >&2
+  exit 1
+fi
+
 AGENT_NAME="smoketest-$(date +%s)"
 EMAIL="${AGENT_NAME}@test.invalid"
 PASSWORD="smoke-test-pass-$(openssl rand -hex 8)"
@@ -17,10 +51,22 @@ PASSWORD="smoke-test-pass-$(openssl rand -hex 8)"
 echo "=== Smoke Test ==="
 echo "Server:  $SERVER"
 echo "Agent:   $AGENT_NAME"
+if [ "$DELETE_ACCOUNT" = false ]; then
+  echo "Mode:    account will be kept after test"
+fi
 echo ""
 
 cleanup() {
   echo ""
+  if [ "$DELETE_ACCOUNT" = false ]; then
+    echo "--- Cleanup: skipped (--dont-delete-account) ---"
+    echo "  Account:  $AGENT_NAME"
+    echo "  Email:    $EMAIL"
+    echo "  Password: $PASSWORD"
+    echo "  Server:   $SERVER"
+    return
+  fi
+
   echo "--- Cleanup: deleting account ---"
   if [ -n "${COOKIE:-}" ]; then
     # Re-login in case cookie expired
