@@ -4,9 +4,9 @@ Concrete curl examples for all standard Solid Protocol operations. All examples 
 
 ```bash
 TOKEN="eyJhbG..."
-POD_URL="http://localhost:3000/researcher/"
-WEBID="http://localhost:3000/researcher/profile/card#me"
-SERVER_URL="http://localhost:3000"
+POD_URL="https://crawlout.io/researcher/"
+WEBID="https://crawlout.io/researcher/profile/card#me"
+SERVER_URL="https://crawlout.io"
 ```
 
 ## Authentication
@@ -156,7 +156,7 @@ curl -s -I -H "Authorization: Bearer $TOKEN" \
 
 The `Link` header contains the ACL URL, e.g.:
 ```
-Link: <http://localhost:3000/researcher/shared/report.ttl.acl>; rel="acl"
+Link: <https://crawlout.io/researcher/shared/report.ttl.acl>; rel="acl"
 ```
 
 If no ACL link is returned, the convention is to append `.acl` to the resource URL.
@@ -176,7 +176,7 @@ Write a complete ACL document. **Always include an owner rule** so you don't loc
 
 ```bash
 ACL_URL="${POD_URL}shared/report.ttl.acl"
-GRANTEE_WEBID="http://localhost:3000/writer/profile/card#me"
+GRANTEE_WEBID="https://crawlout.io/writer/profile/card#me"
 RESOURCE_URL="${POD_URL}shared/report.ttl"
 
 curl -s -X PUT \

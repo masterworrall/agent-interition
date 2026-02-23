@@ -9,7 +9,7 @@ function getArg(name: string): string | undefined {
 
 const name = getArg('name');
 const displayName = getArg('displayName') ?? name;
-const serverUrl = getArg('serverUrl') ?? 'http://localhost:3000';
+const serverUrl = getArg('serverUrl') ?? 'https://crawlout.io';
 
 if (!name) {
   console.error('Usage: npm run bootstrap -- --name <name> [--displayName <name>] [--serverUrl <url>]');

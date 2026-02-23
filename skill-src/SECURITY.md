@@ -2,7 +2,7 @@
 
 ## Network Access
 
-- **Default target**: `http://localhost:3000` (local Community Solid Server)
+- **Default target**: `https://crawlout.io` (Interition's hosted Solid server)
 - **Configurable**: The Skill contacts whatever server is set in `SOLID_SERVER_URL`. If you point it at a remote server, credentials and tokens will be exchanged with that server. **Only use a server you control and trust.**
 - **No other network calls**: The Skill does not contact analytics endpoints, third-party APIs, or any server other than the configured Solid server
 - **No telemetry**: Nothing is reported back to Interition or any other party

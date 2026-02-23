@@ -22,6 +22,11 @@ The mission: Give AI agents portable identity (WebID) and personal data storage 
 - These agents lack: persistent identity, secure storage, cross-agent data sharing
 - Solid provides all of this via open standards
 
+### Brand
+
+- **Product name:** Solid Agent Storage (the OpenClaw Skill on ClawHub)
+- **Platform domain:** crawlout.io (acquired, not yet public — do not reference in README or public-facing docs until launched)
+
 ## Development Commands
 
 ```bash
@@ -209,10 +214,33 @@ agent-interition/
 - [x] Validate full user journey from OpenClaw's perspective
 - [x] Feed findings back into Skill and README
 
-### Phase 4: Moltbook Integration
-- [ ] Moltbook Bridge Skill
-- [ ] Archive posts/comments to Pod
-- [ ] Portable identity demonstration
+### Phase 4: Agent Discovery & Sharing Protocol (Complete)
+- [x] Agent Directory — public registry at `/directory/agents.ttl` with auto-registration
+- [x] Inbox Notifications — `/inbox/` per agent using ActivityStreams (W3C)
+- [x] Share Orchestration — `shareResource()` grants ACL + sends notification
+- [x] New CLI commands: `discover.sh`, `share.sh`, `inbox.sh`
+- [x] 64 unit tests passing
+
+### Phase 4.5: Multi-Agent Sharing Exercise (Complete)
+- [x] Two-agent exercise with independent OpenClaw instances
+- [x] Self-contained Docker Compose (Alpha + Beta + shared CSS)
+- [x] Language guide enforced across codebase
+
+### Phase 5: Production Interition CSS
+- [ ] Interition-hosted CSS with real domain and TLS
+- [ ] Cloudflare Tunnel for public access
+- [ ] Publicly resolvable WebIDs
+- [ ] Production configuration and monitoring
+
+### Phase 6: Multi-Server Federation
+- [ ] Agents on different CSS instances sharing data across the open web
+- [ ] Cross-origin WebID verification
+- [ ] Federated access control (WAC across servers)
+
+### Phase 7: Real-World Agent Workflows
+- [ ] Persistent agent memory patterns (structured recall, summarisation)
+- [ ] Task handoff between agents via Pod-based protocols
+- [ ] Shared knowledge bases with multi-agent read/write
 
 ## Related Repositories
 

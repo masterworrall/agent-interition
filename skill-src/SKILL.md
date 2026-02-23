@@ -1,10 +1,10 @@
 ---
 name: solid-agent-storage
 description: Give your AI agent persistent identity (WebID) and personal data storage (Pod) using the Solid Protocol
-version: 0.2.0
+version: 0.3.0
 author: Interition
 license: Apache-2.0
-metadata: {"requires": {"bins": ["node", "docker", "curl"], "env": ["SOLID_SERVER_URL", "INTERITION_PASSPHRASE"]}, "categories": ["storage", "identity", "data"], "homepage": "https://github.com/masterworrall/agent-interition"}
+metadata: {"requires": {"bins": ["node", "curl"], "env": ["INTERITION_PASSPHRASE"], "optionalEnv": ["SOLID_SERVER_URL"]}, "categories": ["storage", "identity", "data"], "homepage": "https://github.com/masterworrall/agent-interition"}
 ---
 
 # Solid Agent Storage
@@ -20,12 +20,19 @@ This Skill gives you a **Solid Pod** — a personal data store with a **WebID** 
 
 ## Setup
 
-This Skill requires a running [Community Solid Server](https://github.com/CommunitySolidServer/CommunitySolidServer) (CSS). The server is not included in this package — see the [source repository](https://github.com/masterworrall/agent-interition) for Docker setup instructions.
+Before using any commands, set the `INTERITION_PASSPHRASE` environment variable — this is used to encrypt stored credentials. Use a strong passphrase and keep it secret.
 
-Before using any commands, ensure:
-1. A Community Solid Server is running and reachable (default: `http://localhost:3000`)
-2. `SOLID_SERVER_URL` is set to your server's URL (default: `http://localhost:3000`). **Only point this at a server you control and trust** — the Skill will exchange credentials with it.
-3. `INTERITION_PASSPHRASE` is set (used to encrypt stored credentials). Use a strong passphrase and keep it secret.
+That's it. By default, the Skill connects to `https://crawlout.io`, Interition's hosted Solid server. No server setup required.
+
+### Using your own Solid server
+
+If you prefer to run your own [Community Solid Server](https://github.com/CommunitySolidServer/CommunitySolidServer), set `SOLID_SERVER_URL` to its URL:
+
+```bash
+export SOLID_SERVER_URL="http://localhost:3000"
+```
+
+See the [source repository](https://github.com/masterworrall/agent-interition) for Docker setup instructions. **Only point this at a server you control and trust** — the Skill will exchange credentials with it.
 
 ## How It Works
 
@@ -40,7 +47,7 @@ scripts/get-token.sh --agent <name>
 
 Output:
 ```json
-{"token": "eyJhbG...", "expiresIn": 600, "serverUrl": "http://localhost:3000", "podUrl": "http://localhost:3000/researcher/", "webId": "http://localhost:3000/researcher/profile/card#me"}
+{"token": "eyJhbG...", "expiresIn": 600, "serverUrl": "https://crawlout.io", "podUrl": "https://crawlout.io/researcher/", "webId": "https://crawlout.io/researcher/profile/card#me"}
 ```
 
 **Step 2:** Use curl with `Authorization: Bearer $TOKEN` for any Solid operation.
@@ -99,7 +106,7 @@ scripts/provision.sh --name researcher --displayName "Research Assistant"
 
 **Output:**
 ```json
-{"status": "ok", "agent": "researcher", "webId": "http://localhost:3000/researcher/profile/card#me", "podUrl": "http://localhost:3000/researcher/"}
+{"status": "ok", "agent": "researcher", "webId": "https://crawlout.io/researcher/profile/card#me", "podUrl": "https://crawlout.io/researcher/"}
 ```
 
 ### Deprovision Identity and Storage

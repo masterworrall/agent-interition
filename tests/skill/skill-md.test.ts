@@ -36,7 +36,7 @@ describe('SKILL.md validation', () => {
     const parsed = JSON.parse(jsonStr);
     expect(parsed.requires).toBeDefined();
     expect(parsed.requires.bins).toContain('node');
-    expect(parsed.requires.bins).toContain('docker');
+    expect(parsed.requires.bins).toContain('curl');
   });
 
   it('documents get-token workflow', () => {

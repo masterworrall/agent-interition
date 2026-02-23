@@ -186,11 +186,42 @@ See [Dogfooding Setup Guide](docs/dogfooding-setup.md) for full details.
 - [x] Complete dogfood test plan (token-curl-test-plan.md)
 - [x] Feed findings back into Skill and README
 
-**Phase 4: Moltbook Integration**
+**Phase 4: Agent Discovery & Sharing Protocol** — Complete
 
-- [ ] Moltbook Bridge Skill
-- [ ] Archive posts/comments to Pod
-- [ ] Portable identity demonstration
+- [x] Agent Directory — public registry at `/directory/agents.ttl` with auto-registration during provisioning
+- [x] Inbox Notifications — `/inbox/` container per agent using ActivityStreams vocabulary (W3C standard)
+- [x] Share Orchestration — `shareResource()` grants ACL access and sends inbox notification in one call
+- [x] New CLI commands: `discover.sh`, `share.sh`, `inbox.sh`
+- [x] 64 unit tests passing
+
+**Phase 4.5: Multi-Agent Sharing Exercise** — Complete
+
+- [x] Step-by-step exercise for two OpenClaw agents sharing data via Solid Pods
+- [x] Self-contained Docker Compose with Alpha (port 18789) and Beta (port 18790) against shared CSS
+- [x] Fix `--data-raw` for Turtle content in curl examples
+- [x] Fix `/{name}/` path convention (CSS default, not `/agents/{name}/`)
+- [x] Language guide enforced — agent vs identity/storage distinction
+
+**Phase 5: Production Interition CSS**
+
+1. [ ] Interition-hosted CSS with real domain and TLS
+2. [ ] Cloudflare Tunnel for public access
+3. [ ] Publicly resolvable WebIDs (agents verifiable from anywhere)
+4. [ ] Production configuration and monitoring
+
+**Phase 6: Multi-Server Federation**
+
+- [ ] Agents on different CSS instances sharing data across the open web
+- [ ] Cross-origin WebID verification
+- [ ] Federated access control (WAC across servers)
+- [ ] Integration tests against multiple CSS instances
+
+**Phase 7: Real-World Agent Workflows**
+
+- [ ] Persistent agent memory patterns (structured recall, summarisation)
+- [ ] Task handoff between agents via Pod-based protocols
+- [ ] Shared knowledge bases with multi-agent read/write
+- [ ] Reference implementations and documentation
 
 ## Development
 

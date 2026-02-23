@@ -529,33 +529,54 @@ The strategy diagrams show pods at `/agents/{name}/`, but CSS v7 creates pods at
 - [ ] Document findings — what works, what's rough, what needs fixing
 - [ ] Feed findings back into Skill and publish updates to ClawHub
 
-### Phase 4: Moltbook Integration
+### Phase 4: Agent Discovery & Sharing Protocol (Complete)
 
-**Goal:** Capture the 1.6M bot market with portable identity narrative
+**Goal:** Agents can find each other and share data through standard protocols
 
-- [ ] Build Moltbook Bridge Skill
-  - [ ] Archive posts/comments to Pod
-  - [ ] Sync follower graph
-  - [ ] Export reputation data
-- [ ] Portable identity demo
-  - [ ] Bot with WebID participates on Moltbook
-  - [ ] Same bot proves identity on another platform
-  - [ ] "Your bot, your data" marketing video
-- [ ] Reputation portability
-  - [ ] Design portable reputation format (RDF)
-  - [ ] Endorsements signed with WebID
-  - [ ] Cross-platform reputation verification
-- [ ] Community push
-  - [ ] "Don't let Moltbook own your bot" campaign
-  - [ ] Target bot creators who've been burned by platform bans
-  - [ ] Leverage social media lock-in horror stories
+- [x] Agent Directory — public registry at `/directory/agents.ttl` with auto-registration during provisioning
+- [x] Inbox Notifications — `/inbox/` container per agent using ActivityStreams vocabulary (W3C standard)
+- [x] Share Orchestration — `shareResource()` grants ACL access and sends inbox notification in one call
+- [x] New CLI commands: `discover.sh`, `share.sh`, `inbox.sh`
+- [x] 64 unit tests passing
 
-### Phase 5: Scale (ongoing)
+### Phase 4.5: Multi-Agent Sharing Exercise (Complete)
 
-- [ ] Hosted Pod service for agents
-- [ ] Analytics dashboard
-- [ ] Enterprise features (audit, compliance)
-- [ ] Other agent frameworks (CrewAI, AutoGen, LangGraph)
+**Goal:** Validate the full sharing workflow with two independent OpenClaw instances
+
+- [x] Step-by-step exercise for two agents sharing data via Solid Pods
+- [x] Self-contained Docker Compose (Alpha port 18789, Beta port 18790, shared CSS)
+- [x] Language guide enforced across codebase — agent vs identity/storage distinction
+
+### Phase 5: Production Interition CSS
+
+**Goal:** Publicly resolvable WebIDs on Interition infrastructure (crawlout.io)
+
+- [ ] Interition-hosted CSS with real domain and TLS
+- [ ] Cloudflare Tunnel for public access
+- [ ] Publicly resolvable WebIDs (agents verifiable from anywhere)
+- [ ] Production configuration and monitoring
+
+### Phase 6: Multi-Server Federation
+
+**Goal:** Prove Solid's value proposition — agents on different servers sharing data across the open web
+
+- [ ] Agents on different CSS instances sharing data
+- [ ] Cross-origin WebID verification
+- [ ] Federated access control (WAC across servers)
+- [ ] Integration tests against multiple CSS instances
+
+### Phase 7: Real-World Agent Workflows
+
+**Goal:** Practical patterns that make Solid Agent Storage indispensable
+
+- [ ] Persistent agent memory patterns (structured recall, summarisation)
+- [ ] Task handoff between agents via Pod-based protocols
+- [ ] Shared knowledge bases with multi-agent read/write
+- [ ] Reference implementations and documentation
+
+### Marketing: Moltbook Distribution Channel
+
+**Note:** Moltbook integration is not an engineering phase — it's a marketing channel. The 1.6M registered bots on Moltbook are a distribution opportunity for crawlout.io. Escalated to Eleven (CCO) for marketing planning. No engineering dependency.
 
 ---
 

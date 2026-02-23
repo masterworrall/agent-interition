@@ -15,7 +15,7 @@ export function requireArg(name: string, usage: string): string {
 }
 
 export function getServerUrl(): string {
-  return process.env.SOLID_SERVER_URL ?? getArg('serverUrl') ?? 'http://localhost:3000';
+  return process.env.SOLID_SERVER_URL ?? getArg('serverUrl') ?? 'https://crawlout.io';
 }
 
 export function getPassphrase(): string {
