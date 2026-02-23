@@ -13,6 +13,7 @@ usage() {
   echo ""
   echo "Options:"
   echo "  --dont-delete-account   Leave the test account on the server after the test"
+  echo "  --quota-test            Run quota enforcement test (~10MB of writes)"
   echo "  --help                  Show this help message"
   echo ""
   echo "Examples:"
@@ -27,12 +28,14 @@ if [ $# -eq 0 ]; then
 fi
 
 DELETE_ACCOUNT=true
+QUOTA_TEST=false
 SERVER=""
 
 for arg in "$@"; do
   case "$arg" in
     --help|-h) usage ;;
     --dont-delete-account) DELETE_ACCOUNT=false ;;
+    --quota-test) QUOTA_TEST=true ;;
     -*) echo "Unknown option: $arg" >&2; echo "Run '$0 --help' for usage." >&2; exit 1 ;;
     *) SERVER="$arg" ;;
   esac
@@ -53,6 +56,9 @@ echo "Server:  $SERVER"
 echo "Agent:   $AGENT_NAME"
 if [ "$DELETE_ACCOUNT" = false ]; then
   echo "Mode:    account will be kept after test"
+fi
+if [ "$QUOTA_TEST" = true ]; then
+  echo "Quota:   quota enforcement test enabled"
 fi
 echo ""
 
@@ -137,6 +143,21 @@ FAIL=0
 
 pass() { echo "PASS  $1"; PASS=$((PASS + 1)); }
 fail() { echo "FAIL  $1"; FAIL=$((FAIL + 1)); }
+
+refresh_token() {
+  local auth_string
+  auth_string=$(echo -n "${CLIENT_ID}:${CLIENT_SECRET}" | base64)
+  local token_res
+  token_res=$(curl -s -X POST "${SERVER}/.oidc/token" \
+    -H "authorization: Basic ${auth_string}" \
+    -H "content-type: application/x-www-form-urlencoded" \
+    -d "grant_type=client_credentials&scope=webid")
+  TOKEN=$(echo "$token_res" | jq -r '.access_token // empty')
+  if [ -z "$TOKEN" ]; then
+    echo "WARN  Token refresh failed — response: $token_res"
+    return 1
+  fi
+}
 
 # --- 1. Create account ---
 echo "--- 1. Create account ---"
@@ -281,6 +302,61 @@ if [ "$CONFIRM_RES" = "404" ]; then
   pass "Resource confirmed gone (404)"
 else
   fail "Resource still exists — HTTP $CONFIRM_RES"
+fi
+
+# --- Quota test (optional) ---
+
+if [ "$QUOTA_TEST" = true ]; then
+  echo ""
+  echo "--- 10. Fill pod with 1MB chunks ---"
+  refresh_token || { fail "Token refresh before quota test"; }
+
+  QUOTA_FILES_WRITTEN=0
+  QUOTA_HIT=false
+
+  for i in $(seq 1 15); do
+    WRITE_CODE=$(dd if=/dev/urandom bs=1024 count=1024 2>/dev/null | \
+      curl -s -o /dev/null -w "%{http_code}" \
+        -X PUT \
+        -H "Authorization: Bearer ${TOKEN}" \
+        -H "Content-Type: application/octet-stream" \
+        --data-binary @- \
+        "${POD}memory/quota-${i}.bin")
+
+    if [ "$WRITE_CODE" = "413" ]; then
+      echo "      Chunk $i → HTTP 413 (quota exceeded)"
+      QUOTA_HIT=true
+      break
+    elif [ "$WRITE_CODE" = "201" ] || [ "$WRITE_CODE" = "205" ]; then
+      echo "      Chunk $i → HTTP $WRITE_CODE (written)"
+      QUOTA_FILES_WRITTEN=$((QUOTA_FILES_WRITTEN + 1))
+    else
+      echo "      Chunk $i → HTTP $WRITE_CODE (unexpected)"
+      fail "Quota write chunk $i — HTTP $WRITE_CODE"
+      break
+    fi
+  done
+
+  echo "--- 11. Verify quota rejection ---"
+  if [ "$QUOTA_HIT" = true ] && [ "$QUOTA_FILES_WRITTEN" -gt 0 ]; then
+    pass "Quota enforced after ${QUOTA_FILES_WRITTEN}MB written"
+  elif [ "$QUOTA_HIT" = true ] && [ "$QUOTA_FILES_WRITTEN" -eq 0 ]; then
+    fail "Quota rejected first write — quota too small or broken"
+  else
+    fail "Wrote ${QUOTA_FILES_WRITTEN} chunks without hitting quota — not enforced"
+  fi
+
+  echo "--- 12. Clean up quota files ---"
+  refresh_token || echo "WARN  Token refresh before cleanup failed"
+
+  for i in $(seq 1 "$QUOTA_FILES_WRITTEN"); do
+    DEL_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+      -X DELETE \
+      -H "Authorization: Bearer ${TOKEN}" \
+      "${POD}memory/quota-${i}.bin")
+    echo "      quota-${i}.bin → HTTP $DEL_CODE"
+  done
+  pass "Quota files cleaned up ($QUOTA_FILES_WRITTEN files)"
 fi
 
 # --- Account cleanup happens in EXIT trap ---
