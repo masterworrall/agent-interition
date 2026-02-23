@@ -1,7 +1,7 @@
 ---
 name: solid-agent-storage
 description: Give your AI agent persistent identity (WebID) and personal data storage (Pod) using the Solid Protocol
-version: 0.3.3
+version: 0.3.4
 author: Interition
 license: Apache-2.0
 metadata:
@@ -81,6 +81,8 @@ The Solid server issues credentials to prevent anyone other than your agent from
 ## How It Works
 
 This Skill provides **three management scripts** for CSS-specific operations (provisioning, deprovisioning, status) plus a **token helper** for authentication. All standard Solid operations (read, write, delete, share) are done with **curl and a Bearer token** — your Pod is a standard W3C Solid server.
+
+For broader guidance on using Solid servers and the wider Solid ecosystem, refer to [solidproject.org](https://solidproject.org). The full protocol specification is at [Solid Protocol (W3C)](https://solidproject.org/TR/protocol).
 
 ### Two-Step Workflow
 
