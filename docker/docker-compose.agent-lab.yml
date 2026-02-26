@@ -62,7 +62,7 @@ services:
       SAP_PORT: 3000
       SAP_DATA_DIR: /data
     ports:
-      - "127.0.0.1:3000:3000"
+      - "3000:3000"
     networks:
       - agent-lab
 
@@ -111,7 +111,7 @@ services:
       INTERITION_PASSPHRASE: ${INTERITION_PASSPHRASE_SCOUT:?Set INTERITION_PASSPHRASE_SCOUT}
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_SCOUT_TOKEN:?Set OPENCLAW_SCOUT_TOKEN}
     ports:
-      - "127.0.0.1:18791:18791"
+      - "18791:18791"
     networks:
       - agent-lab
     depends_on:
@@ -133,7 +133,7 @@ services:
       INTERITION_PASSPHRASE: ${INTERITION_PASSPHRASE_ANALYST:?Set INTERITION_PASSPHRASE_ANALYST}
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_ANALYST_TOKEN:?Set OPENCLAW_ANALYST_TOKEN}
     ports:
-      - "127.0.0.1:18792:18792"
+      - "18792:18792"
     networks:
       - agent-lab
     depends_on:
