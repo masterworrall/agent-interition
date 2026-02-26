@@ -3,7 +3,8 @@
     "bind": "lan",
     "port": 18791,
     "controlUi": {
-      "allowInsecureAuth": true
+      "allowInsecureAuth": true,
+      "dangerouslyAllowHostHeaderOriginFallback": true
     }
   }
 }
