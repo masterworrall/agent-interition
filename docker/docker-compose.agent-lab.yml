@@ -1,0 +1,154 @@
+# Agent Lab — Multi-Agent Sharing Demo
+#
+# Two OpenClaw agents (Scout + Analyst) demonstrating Solid Protocol
+# boundary enforcement on crawlout.io.
+#
+# By default, agents connect to crawlout.io (production Solid server).
+# Set SOLID_SERVER_URL=http://css:3000 to use the local CSS instead.
+#
+# Scout gateway:   http://localhost:18791
+# Analyst gateway: http://localhost:18792
+# Local CSS:       http://localhost:3000 (always running, used when SOLID_SERVER_URL=http://css:3000)
+#
+# Usage:
+#   1. Build CSS:   ANTHROPIC_API_KEY=dummy INTERITION_PASSPHRASE=dummy \
+#                   docker compose -f docker/docker-compose.agent-lab.yml build css
+#   2. Start:       ANTHROPIC_API_KEY=sk-... \
+#                   INTERITION_PASSPHRASE_SCOUT=... \
+#                   INTERITION_PASSPHRASE_ANALYST=... \
+#                   OPENCLAW_SCOUT_TOKEN=... \
+#                   OPENCLAW_ANALYST_TOKEN=... \
+#                   docker compose -f docker/docker-compose.agent-lab.yml up
+#   3. Scout UI:    http://localhost:18791
+#   4. Analyst UI:  http://localhost:18792
+#
+# To use local CSS instead of crawlout.io:
+#   Add: SOLID_SERVER_URL=http://css:3000
+#   (agents reach the CSS container via Docker network)
+#
+# Teardown:
+#   docker compose -f docker/docker-compose.agent-lab.yml down
+#   docker compose -f docker/docker-compose.agent-lab.yml down -v  # also removes data
+
+# ── Shared config for OpenClaw hardening ──────────────────────────
+x-openclaw-base: &openclaw-base
+  image: openclaw:local
+  read_only: true
+  security_opt:
+    - no-new-privileges
+  cap_drop:
+    - ALL
+  user: "1000:1000"
+  tmpfs:
+    - /tmp
+    - /home/node/.cache
+  environment: &openclaw-env
+    HOME: /home/node
+    TERM: xterm-256color
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY}
+    SOLID_SERVER_URL: ${SOLID_SERVER_URL:-https://crawlout.io}
+
+services:
+  # ── Community Solid Server (local, always available) ─────────────
+  # Runs alongside the agents. Use SOLID_SERVER_URL=http://css:3000
+  # to point agents at this instead of crawlout.io.
+  css:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - css-data:/data
+    environment:
+      SAP_PORT: 3000
+      SAP_DATA_DIR: /data
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - agent-lab
+
+  # ── Volume Init: Scout ──────────────────────────────────────────
+  init-scout:
+    image: openclaw:local
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mkdir -p /home/node/.openclaw/workspace/skills
+        chown -R 1000:1000 /home/node/.openclaw /home/node/.interition
+        echo "[init-scout] Volume permissions set for uid 1000"
+    volumes:
+      - scout-openclaw-config:/home/node/.openclaw
+      - scout-interition-creds:/home/node/.interition
+    networks:
+      - agent-lab
+
+  # ── Volume Init: Analyst ────────────────────────────────────────
+  init-analyst:
+    image: openclaw:local
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mkdir -p /home/node/.openclaw/workspace/skills
+        chown -R 1000:1000 /home/node/.openclaw /home/node/.interition
+        echo "[init-analyst] Volume permissions set for uid 1000"
+    volumes:
+      - analyst-openclaw-config:/home/node/.openclaw
+      - analyst-interition-creds:/home/node/.interition
+    networks:
+      - agent-lab
+
+  # ── OpenClaw: Scout (gateway port 18791) ────────────────────────
+  scout:
+    <<: *openclaw-base
+    volumes:
+      - scout-openclaw-config:/home/node/.openclaw
+      - scout-interition-creds:/home/node/.interition
+      - ./openclaw-config-scout.json:/home/node/.openclaw/openclaw.json:ro
+      - ../skill/solid-agent-storage:/home/node/.openclaw/workspace/skills/solid-agent-storage:ro
+    environment:
+      <<: *openclaw-env
+      INTERITION_PASSPHRASE: ${INTERITION_PASSPHRASE_SCOUT:?Set INTERITION_PASSPHRASE_SCOUT}
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_SCOUT_TOKEN:?Set OPENCLAW_SCOUT_TOKEN}
+    ports:
+      - "127.0.0.1:18791:18791"
+    networks:
+      - agent-lab
+    depends_on:
+      init-scout:
+        condition: service_completed_successfully
+      css:
+        condition: service_started
+
+  # ── OpenClaw: Analyst (gateway port 18792) ──────────────────────
+  analyst:
+    <<: *openclaw-base
+    volumes:
+      - analyst-openclaw-config:/home/node/.openclaw
+      - analyst-interition-creds:/home/node/.interition
+      - ./openclaw-config-analyst.json:/home/node/.openclaw/openclaw.json:ro
+      - ../skill/solid-agent-storage:/home/node/.openclaw/workspace/skills/solid-agent-storage:ro
+    environment:
+      <<: *openclaw-env
+      INTERITION_PASSPHRASE: ${INTERITION_PASSPHRASE_ANALYST:?Set INTERITION_PASSPHRASE_ANALYST}
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_ANALYST_TOKEN:?Set OPENCLAW_ANALYST_TOKEN}
+    ports:
+      - "127.0.0.1:18792:18792"
+    networks:
+      - agent-lab
+    depends_on:
+      init-analyst:
+        condition: service_completed_successfully
+      css:
+        condition: service_started
+
+volumes:
+  css-data:
+  scout-openclaw-config:
+  scout-interition-creds:
+  analyst-openclaw-config:
+  analyst-interition-creds:
+
+networks:
+  agent-lab:
+    driver: bridge
