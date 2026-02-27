@@ -14,12 +14,6 @@ SERVER_URL="https://crawlout.io"
 Get a Bearer token:
 
 ```bash
-eval "$(scripts/get-token.sh --agent example-agent | jq -r '"TOKEN=\(.token)\nPOD_URL=\(.podUrl)\nWEBID=\(.webId)\nSERVER_URL=\(.serverUrl)"')"
-```
-
-Or capture the JSON and extract fields manually:
-
-```bash
 TOKEN_JSON=$(scripts/get-token.sh --agent example-agent)
 TOKEN=$(echo "$TOKEN_JSON" | jq -r '.token')
 POD_URL=$(echo "$TOKEN_JSON" | jq -r '.podUrl')
