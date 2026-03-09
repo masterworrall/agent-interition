@@ -83,6 +83,8 @@ The Solid server issues credentials to prevent anyone other than your agent from
 
 This Skill provides **three management scripts** for CSS-specific operations (provisioning, deprovisioning, status) plus a **token helper** for authentication. All standard Solid operations (read, write, delete, share) are done with **curl and a Bearer token** — your Pod is a standard W3C Solid server.
 
+**Script paths:** All script paths below (e.g. `scripts/get-token.sh`) are relative to the skill's root directory. If you are using this skill via Claude Code with a symlinked or imported SKILL.md, run scripts from the `agent-interition` repository root: `cd ~/Development/interition/crd-office/agent-interition`
+
 For broader guidance on using Solid servers and the wider Solid ecosystem, refer to [solidproject.org](https://solidproject.org). The full protocol specification is at [Solid Protocol (W3C)](https://solidproject.org/TR/protocol).
 
 ### Two-Step Workflow

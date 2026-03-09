@@ -3,11 +3,13 @@ dist/
 .solid-data/
 *.tsbuildinfo
 .env
-.env.local
+.env.*
+!.env.*.example
 coverage/
 .DS_Store
 *.log
 /skill/
+# Legacy start scripts with hardcoded secrets (replaced by .env pattern)
 start-local.sh
 start-remote.sh
 start-exercise.sh

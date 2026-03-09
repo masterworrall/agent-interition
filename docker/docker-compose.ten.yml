@@ -1,0 +1,57 @@
+# Ten (COO) — OpenClaw agent on ubuntu01
+#
+# Monitors crawlout.io health and posts reports to the team channel.
+# Accessible via Telegram (@your_bot) and browser (port 18800).
+#
+# Setup:
+#   1. Copy .env.ten.example to .env.ten and fill in values (tokens, API keys)
+#   2. Deploy: scp docker-compose.ten.yml generate-config-ten.js .env.ten start-ten.sh ten@ubuntu01.local:/home/ten/openclaw/
+#   3. On ubuntu01: ./start-ten.sh
+#
+# First-time setup (after start):
+#   ./start-ten.sh setup
+
+services:
+  init-ten:
+    image: openclaw:local
+    user: "0:0"
+    entrypoint: ["node", "/tmp/generate-config-ten.js"]
+    environment:
+      TELEGRAM_ALLOWED_USER_ID: ${TELEGRAM_ALLOWED_USER_ID:?Set TELEGRAM_ALLOWED_USER_ID}
+    volumes:
+      - ten-openclaw-config:/home/node/.openclaw
+      - ten-interition-creds:/home/node/.interition
+      - ./generate-config-ten.js:/tmp/generate-config-ten.js:ro
+
+  ten:
+    container_name: ten
+    image: openclaw:local
+    restart: unless-stopped
+    depends_on:
+      init-ten:
+        condition: service_completed_successfully
+    ports:
+      - "0.0.0.0:18800:18800"
+    volumes:
+      - ten-openclaw-config:/home/node/.openclaw
+      - ten-interition-creds:/home/node/.interition
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY}
+      INTERITION_PASSPHRASE: ${INTERITION_PASSPHRASE:?Set INTERITION_PASSPHRASE}
+      SOLID_SERVER_URL: https://crawlout.io
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_TEN_TOKEN:?Set OPENCLAW_TEN_TOKEN}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?Set TELEGRAM_BOT_TOKEN}
+      TELEGRAM_ALLOWED_USER_ID: ${TELEGRAM_ALLOWED_USER_ID:?Set TELEGRAM_ALLOWED_USER_ID}
+    security_opt:
+      - no-new-privileges
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+      - /home/node/.cache
+
+volumes:
+  ten-openclaw-config:
+  ten-interition-creds:

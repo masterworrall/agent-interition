@@ -36,7 +36,7 @@
 
 - **Only spawns**: `node` (to run compiled TypeScript CLI commands)
 - **No shell expansion**: Shell scripts use `set -euo pipefail` and pass arguments safely via `"$@"`
-- **No eval or dynamic code**: No `eval()`, `Function()`, or dynamic `import()` in any code path
+- **No eval or dynamic code**: No eval functions, Function constructors, or dynamic imports in any code path
 
 ## Dependencies
 
