@@ -1,0 +1,54 @@
+# Thirteen (Social Media) — OpenClaw agent on ubuntu01
+#
+# Social media execution under the CMO office.
+# Accessible via Telegram (@your_bot) and browser (port 18801).
+#
+# Setup:
+#   1. Copy .env.thirteen.example to .env.thirteen and fill in values
+#   2. Deploy: scp docker-compose.thirteen.yml generate-config-thirteen.js .env.thirteen start-thirteen.sh thirteen@ubuntu01.local:/home/thirteen/openclaw/
+#   3. On ubuntu01: ./start-thirteen.sh up && ./start-thirteen.sh setup
+
+services:
+  init-thirteen:
+    image: openclaw:local
+    user: "0:0"
+    entrypoint: ["node", "/tmp/generate-config-thirteen.js"]
+    environment:
+      TELEGRAM_ALLOWED_USER_ID: ${TELEGRAM_ALLOWED_USER_ID:?Set TELEGRAM_ALLOWED_USER_ID}
+    volumes:
+      - thirteen-openclaw-config:/home/node/.openclaw
+      - thirteen-interition-creds:/home/node/.interition
+      - ./generate-config-thirteen.js:/tmp/generate-config-thirteen.js:ro
+
+  thirteen:
+    container_name: thirteen
+    image: openclaw:local
+    restart: unless-stopped
+    depends_on:
+      init-thirteen:
+        condition: service_completed_successfully
+    ports:
+      - "0.0.0.0:18801:18801"
+    volumes:
+      - thirteen-openclaw-config:/home/node/.openclaw
+      - thirteen-interition-creds:/home/node/.interition
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY}
+      INTERITION_PASSPHRASE: ${INTERITION_PASSPHRASE:?Set INTERITION_PASSPHRASE}
+      SOLID_SERVER_URL: https://crawlout.io
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_THIRTEEN_TOKEN:?Set OPENCLAW_THIRTEEN_TOKEN}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?Set TELEGRAM_BOT_TOKEN}
+      TELEGRAM_ALLOWED_USER_ID: ${TELEGRAM_ALLOWED_USER_ID:?Set TELEGRAM_ALLOWED_USER_ID}
+    security_opt:
+      - no-new-privileges
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+      - /home/node/.cache
+
+volumes:
+  thirteen-openclaw-config:
+  thirteen-interition-creds:
