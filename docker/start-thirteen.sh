@@ -9,7 +9,9 @@
 #   ./start-thirteen.sh reset        Stop Thirteen and remove all volumes (full reset)
 #   ./start-thirteen.sh logs         Tail Thirteen's logs
 #   ./start-thirteen.sh pair         List and approve pending device pairing requests
-#   ./start-thirteen.sh setup        First-time setup: pair
+#   ./start-thirteen.sh auth         OpenAI OAuth login (headless — manual paste)
+#   ./start-thirteen.sh model        Set default model (e.g. openai/gpt-4o)
+#   ./start-thirteen.sh setup        First-time setup: pair + auth
 #   ./start-thirteen.sh help         Show this help
 #
 # Secrets are in .env.thirteen (never committed — see .env.thirteen.example)
@@ -37,7 +39,9 @@ usage() {
   echo "  reset     Stop Thirteen and remove all volumes (full reset)"
   echo "  logs      Tail Thirteen's logs"
   echo "  pair      List and approve pending device pairing requests"
-  echo "  setup     First-time setup: pair (interactive)"
+  echo "  auth      OpenAI OAuth login (headless — manual paste of callback URL)"
+  echo "  model     Set default model (e.g. $0 model openai/gpt-4o)"
+  echo "  setup     First-time setup: pair + auth (interactive)"
   echo "  help      Show this help"
   exit 0
 }
@@ -51,6 +55,34 @@ do_pair() {
     docker exec thirteen node /app/openclaw.mjs devices approve "$request_id"
     echo "Device approved."
   fi
+}
+
+do_auth() {
+  echo "OpenAI OAuth login (headless mode)"
+  echo ""
+  echo "This will start the OAuth flow. OpenClaw will print a URL."
+  echo "1. Copy the URL and open it in your browser"
+  echo "2. Log in to OpenAI and authorise"
+  echo "3. Your browser will redirect to http://127.0.0.1:1455/auth/callback?..."
+  echo "4. That page will fail to load (port not exposed) — this is expected"
+  echo "5. Copy the FULL URL from your browser address bar"
+  echo "6. Paste it back here when prompted"
+  echo ""
+  docker exec -it thirteen node /app/openclaw.mjs models auth login --provider openai-codex
+  echo ""
+  echo "Setting default model to openai-codex/gpt-5.4..."
+  docker exec -it thirteen node /app/openclaw.mjs config set agents.defaults.model "openai-codex/gpt-5.4"
+  echo ""
+  echo "Restart the container to apply: docker restart thirteen"
+  echo "OpenAI auth complete. Tokens and model config stored in container volume."
+}
+
+do_model() {
+  local model="${1:-openai/gpt-4o}"
+  echo "Setting default model to: $model"
+  docker exec -it thirteen node /app/openclaw.mjs config set agents.defaults.model "$model"
+  echo "Model set. Verify:"
+  docker exec thirteen node /app/openclaw.mjs config get agents.defaults.model
 }
 
 cmd="${1:-up}"
@@ -82,12 +114,25 @@ case "$cmd" in
   pair)
     do_pair
     ;;
+  auth)
+    do_auth
+    ;;
+  model)
+    shift || true
+    do_model "${1:-openai/gpt-4o}"
+    ;;
   setup)
     echo "=== Thirteen first-time setup ==="
     echo ""
-    echo "Device pairing"
+    echo "Step 1/3: Device pairing"
     echo "Open http://localhost:18801 in your browser first, then:"
     do_pair
+    echo ""
+    echo "Step 2/3: OpenAI OAuth"
+    do_auth
+    echo ""
+    echo "Step 3/3: Set default model"
+    do_model "openai/gpt-4o"
     echo ""
     echo "=== Setup complete ==="
     echo "Message your Telegram bot to verify."
