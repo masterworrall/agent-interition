@@ -91,13 +91,29 @@ function decrypt(payload: EncryptedPayload, passphrase: Buffer): string {
   }
 }
 
-export function saveCredentials(name: string, credentials: StoredCredentials): void {
+/**
+ * Derive a filesystem-safe key from a server URL.
+ * e.g. "https://crawlout.io" → "crawlout.io"
+ *      "http://localhost:3000" → "localhost_3000"
+ */
+export function serverKey(serverUrl: string): string {
+  const url = new URL(serverUrl);
+  const isDefaultPort =
+    (url.protocol === 'https:' && (!url.port || url.port === '443')) ||
+    (url.protocol === 'http:' && (!url.port || url.port === '80'));
+  if (isDefaultPort) {
+    return url.hostname;
+  }
+  return `${url.hostname}_${url.port}`;
+}
+
+export function saveCredentials(name: string, serverUrl: string, credentials: StoredCredentials): void {
   const passphrase = getPassphrase();
-  const agentDir = join(getStoreDir(), name);
-  mkdirSync(agentDir, { recursive: true });
+  const credDir = join(getStoreDir(), name, serverKey(serverUrl));
+  mkdirSync(credDir, { recursive: true });
 
   const payload = encrypt(JSON.stringify(credentials), passphrase);
-  const filePath = join(agentDir, 'credentials.enc');
+  const filePath = join(credDir, 'credentials.enc');
   writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf-8');
 
   // Defence in depth: restrict file permissions (owner only)
@@ -108,24 +124,45 @@ export function saveCredentials(name: string, credentials: StoredCredentials): v
   }
 }
 
-export function loadCredentials(name: string): StoredCredentials {
+export function loadCredentials(name: string, serverUrl: string): StoredCredentials {
   const passphrase = getPassphrase();
-  const filePath = join(getStoreDir(), name, 'credentials.enc');
+  const key = serverKey(serverUrl);
+  const newPath = join(getStoreDir(), name, key, 'credentials.enc');
 
-  if (!existsSync(filePath)) {
-    throw new Error(`No credentials found for agent "${name}". Run provision first.`);
+  // Try new multi-server path first
+  if (existsSync(newPath)) {
+    const raw = readFileSync(newPath, 'utf-8');
+    const payload: EncryptedPayload = JSON.parse(raw);
+    const decrypted = decrypt(payload, passphrase);
+    return JSON.parse(decrypted);
   }
 
-  const raw = readFileSync(filePath, 'utf-8');
-  const payload: EncryptedPayload = JSON.parse(raw);
-  const decrypted = decrypt(payload, passphrase);
-  return JSON.parse(decrypted);
+  // Fallback: legacy flat path (agent dir with no server subdirectory)
+  const legacyPath = join(getStoreDir(), name, 'credentials.enc');
+  if (existsSync(legacyPath)) {
+    const raw = readFileSync(legacyPath, 'utf-8');
+    const payload: EncryptedPayload = JSON.parse(raw);
+    const decrypted = decrypt(payload, passphrase);
+    return JSON.parse(decrypted);
+  }
+
+  throw new Error(`No credentials found for agent "${name}" on server "${serverUrl}". Run provision first.`);
 }
 
-export function deleteAgentCredentials(name: string): void {
+export function deleteAgentCredentials(name: string, serverUrl: string): void {
+  const key = serverKey(serverUrl);
+  const credDir = join(getStoreDir(), name, key);
+  if (existsSync(credDir)) {
+    rmSync(credDir, { recursive: true, force: true });
+  }
+
+  // Clean up agent directory if empty
   const agentDir = join(getStoreDir(), name);
   if (existsSync(agentDir)) {
-    rmSync(agentDir, { recursive: true, force: true });
+    const remaining = readdirSync(agentDir);
+    if (remaining.length === 0) {
+      rmSync(agentDir, { recursive: true, force: true });
+    }
   }
 }
 
@@ -136,4 +173,32 @@ export function listAgents(): string[] {
   return readdirSync(dir, { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => d.name);
+}
+
+export function listCredentials(): Array<{ name: string; server: string }> {
+  const dir = getStoreDir();
+  if (!existsSync(dir)) return [];
+
+  const results: Array<{ name: string; server: string }> = [];
+  const agents = readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory());
+
+  for (const agent of agents) {
+    const agentDir = join(dir, agent.name);
+    const entries = readdirSync(agentDir, { withFileTypes: true });
+
+    // Check for legacy credentials.enc at agent root
+    const hasLegacy = entries.some((e) => e.isFile() && e.name === 'credentials.enc');
+    if (hasLegacy) {
+      results.push({ name: agent.name, server: '(legacy)' });
+    }
+
+    // Check for server subdirectories
+    for (const entry of entries) {
+      if (entry.isDirectory() && existsSync(join(agentDir, entry.name, 'credentials.enc'))) {
+        results.push({ name: agent.name, server: entry.name });
+      }
+    }
+  }
+
+  return results;
 }

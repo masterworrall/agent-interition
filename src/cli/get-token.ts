@@ -7,7 +7,7 @@ const serverUrl = getServerUrl();
 initStore(getPassphrase());
 
 (async () => {
-  const creds = loadCredentials(agent);
+  const creds = loadCredentials(agent, serverUrl);
 
   const tokenUrl = `${serverUrl}/.oidc/token`;
   const authString = Buffer.from(`${creds.id}:${creds.secret}`).toString('base64');

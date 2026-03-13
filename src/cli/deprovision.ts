@@ -20,7 +20,7 @@ async function deprovision(): Promise<DeprovisionResult> {
   let accountDeleted = false;
 
   // 1. Load credentials
-  const creds = loadCredentials(name);
+  const creds = loadCredentials(name, serverUrl);
 
   // 2. Attempt full CSS account deletion if email+password are available
   if (creds.email && creds.password) {
@@ -39,7 +39,7 @@ async function deprovision(): Promise<DeprovisionResult> {
   }
 
   // 3. Delete local credential files
-  deleteAgentCredentials(name);
+  deleteAgentCredentials(name, serverUrl);
 
   const result: DeprovisionResult = {
     status: accountDeleted ? 'ok' : 'partial',

@@ -30,7 +30,7 @@ describe('get-token', () => {
   beforeEach(() => {
     tempDir = mkdtempSync(join(tmpdir(), 'interition-test-'));
     initStore('test-passphrase');
-    saveCredentials('researcher', testCreds);
+    saveCredentials('researcher', 'http://localhost:3000', testCreds);
   });
 
   afterEach(() => {
@@ -50,7 +50,7 @@ describe('get-token', () => {
   });
 
   it('credentials store returns correct id and secret for token request', () => {
-    const creds = loadCredentials('researcher');
+    const creds = loadCredentials('researcher', 'http://localhost:3000');
     expect(creds.id).toBe('test-client-id');
     expect(creds.secret).toBe('test-client-secret');
     expect(creds.podUrl).toBe('http://localhost:3000/agents/researcher/');
@@ -76,7 +76,7 @@ describe('get-token', () => {
   });
 
   it('Basic auth encoding matches CSS client_credentials flow', () => {
-    const creds = loadCredentials('researcher');
+    const creds = loadCredentials('researcher', 'http://localhost:3000');
     const authString = Buffer.from(`${creds.id}:${creds.secret}`).toString('base64');
 
     // Verify it can be decoded back

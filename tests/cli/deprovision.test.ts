@@ -56,17 +56,17 @@ describe('deprovision', () => {
   });
 
   it('deletes CSS account and local credentials for an agent with provisioned WebID and Pod', async () => {
-    saveCredentials('alpha', fullCreds);
+    saveCredentials('alpha', 'http://localhost:3000', fullCreds);
     mockLoginWithPassword.mockResolvedValue('session-cookie');
     mockDeleteAccount.mockResolvedValue(undefined);
 
-    const creds = loadCredentials('alpha');
+    const creds = loadCredentials('alpha', 'http://localhost:3000');
     expect(creds.email).toBe(fullCreds.email);
     expect(creds.password).toBe(fullCreds.password);
 
     const cookie = await loginWithPassword('http://localhost:3000', creds.email!, creds.password!);
     await deleteAccount('http://localhost:3000', cookie);
-    deleteAgentCredentials('alpha');
+    deleteAgentCredentials('alpha', 'http://localhost:3000');
 
     expect(mockLoginWithPassword).toHaveBeenCalledWith('http://localhost:3000', fullCreds.email, fullCreds.password);
     expect(mockDeleteAccount).toHaveBeenCalledWith('http://localhost:3000', 'session-cookie');
@@ -74,22 +74,22 @@ describe('deprovision', () => {
   });
 
   it('skips CSS cleanup for legacy credentials without email/password', () => {
-    saveCredentials('legacy', legacyCreds);
-    const creds = loadCredentials('legacy');
+    saveCredentials('legacy', 'http://localhost:3000', legacyCreds);
+    const creds = loadCredentials('legacy', 'http://localhost:3000');
 
     expect(creds.email).toBeUndefined();
     expect(creds.password).toBeUndefined();
 
-    deleteAgentCredentials('legacy');
+    deleteAgentCredentials('legacy', 'http://localhost:3000');
     expect(listAgents()).not.toContain('legacy');
     expect(mockLoginWithPassword).not.toHaveBeenCalled();
   });
 
   it('still deletes local credentials when CSS login fails', async () => {
-    saveCredentials('alpha', fullCreds);
+    saveCredentials('alpha', 'http://localhost:3000', fullCreds);
     mockLoginWithPassword.mockRejectedValue(new Error('Server unreachable'));
 
-    const creds = loadCredentials('alpha');
+    const creds = loadCredentials('alpha', 'http://localhost:3000');
 
     let accountDeleted = false;
     try {
@@ -100,7 +100,7 @@ describe('deprovision', () => {
       // Expected — server unreachable
     }
 
-    deleteAgentCredentials('alpha');
+    deleteAgentCredentials('alpha', 'http://localhost:3000');
 
     expect(accountDeleted).toBe(false);
     expect(listAgents()).not.toContain('alpha');

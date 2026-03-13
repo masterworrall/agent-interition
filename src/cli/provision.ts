@@ -10,7 +10,7 @@ initStore(getPassphrase());
 
 provisionAgent({ name, displayName, serverUrl })
   .then((agent) => {
-    saveCredentials(name, {
+    saveCredentials(name, serverUrl, {
       webId: agent.webId,
       podUrl: agent.podUrl,
       id: agent.clientCredentials.id,
