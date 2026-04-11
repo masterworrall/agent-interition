@@ -11,6 +11,7 @@
  *   read-chat [--last N]                      List and fetch last N messages
  *   post-message --to <webid> --text <msg> --topic <t>   Post to team chat
  *   read-resource <url>                       GET any Solid resource
+ *   write-resource <url> --file <path>        PUT Turtle file to Pod URL
  *   list-container <url>                      List container members
  */
 
@@ -41,12 +42,15 @@ switch (command) {
   case 'read-resource':
     await readResource();
     break;
+  case 'write-resource':
+    await writeResource();
+    break;
   case 'list-container':
     await listContainer();
     break;
   default:
     console.error(`Unknown command: ${command}`);
-    console.error('Commands: read-chat, post-message, read-resource, list-container');
+    console.error('Commands: read-chat, post-message, read-resource, write-resource, list-container');
     process.exit(1);
 }
 
@@ -141,6 +145,28 @@ async function readResource() {
   }
   const body = await solidGet(url);
   console.log(body);
+}
+
+async function writeResource() {
+  const url = findPositionalArg();
+  const filePath = getArg('file');
+  if (!url || !filePath) {
+    console.error('Usage: solid-ops --agent <name> write-resource <url> --file <path>');
+    process.exit(1);
+  }
+  const { readFileSync } = await import('fs');
+  const body = readFileSync(filePath, 'utf8');
+  const resp = await authFetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'text/turtle' },
+    body,
+  });
+  if (!resp.ok) {
+    const err = await resp.text();
+    console.error(JSON.stringify({ error: `PUT failed: ${resp.status}`, detail: err }));
+    process.exit(1);
+  }
+  console.log(JSON.stringify({ ok: true, url, status: resp.status }));
 }
 
 async function listContainer() {
