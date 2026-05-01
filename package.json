@@ -1,6 +1,6 @@
 {
   "name": "@interition/agent-interition",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Solid Protocol infrastructure for AI agents — WebID identity and Pod storage",
   "type": "module",
   "main": "dist/index.js",
