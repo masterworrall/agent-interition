@@ -8,6 +8,7 @@
     "css:start": "community-solid-server -c @css:config/file.json -f .solid-data --seedConfig css-config/seed.json -p 3000",
     "bootstrap": "tsx src/bootstrap/cli.ts",
     "demo": "tsx src/demo/two-agents.ts",
+    "memory": "tsx src/memory/cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "tsc",
