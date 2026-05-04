@@ -365,3 +365,54 @@ describe('MemoryStore.supersede', () => {
     expect(indexBody).not.toContain('"No heredocs"\n'); // old label gone
   });
 });
+
+describe('MemoryStore.reconcileIndex', () => {
+  it('drops index entries whose metadata resource returns 404', async () => {
+    const pod = createMockPod();
+    const store = new MemoryStore({ podBase: POD, agentWebId: WEBID, authFetch: pod.fetch });
+    await store.ensureContainers();
+
+    const live = await store.write({
+      type: Preference,
+      label: 'Kept',
+      appliesTo: ['x'],
+      body: 'real one',
+    });
+
+    // Manually delete the resource for a second entry from underneath the
+    // index (simulating what we found on Phoenix).
+    const ghost = await store.write({
+      type: Preference,
+      label: 'Ghost',
+      appliesTo: ['x'],
+      body: 'about to vanish',
+    });
+    const ghostMetadataUrl = ghost.uri.replace(/#entry$/, '');
+    pod.resources.delete(ghostMetadataUrl);
+    pod.resources.delete(ghost.bodyUri!);
+
+    const before = await store.loadIndex();
+    expect(before.entries).toHaveLength(2);
+
+    const result = await store.reconcileIndex();
+    expect(result.kept).toBe(1);
+    expect(result.removed).toEqual([ghost.uri]);
+
+    const after = await store.loadIndex();
+    expect(after.entries).toHaveLength(1);
+    expect(after.entries[0].uri).toBe(live.uri);
+  });
+
+  it('is a no-op when the index is clean', async () => {
+    const pod = createMockPod();
+    const store = new MemoryStore({ podBase: POD, agentWebId: WEBID, authFetch: pod.fetch });
+    await store.ensureContainers();
+    await store.write({ type: Preference, label: 'Keep me', body: 'b' });
+
+    const indexBefore = pod.resources.get(`${POD}memory/index.ttl`)!.body;
+    const result = await store.reconcileIndex();
+    expect(result.removed).toEqual([]);
+    expect(result.kept).toBe(1);
+    expect(pod.resources.get(`${POD}memory/index.ttl`)!.body).toBe(indexBefore);
+  });
+});

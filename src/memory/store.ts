@@ -152,6 +152,39 @@ export class MemoryStore {
   }
 
   /**
+   * Reconcile the index against the actual state of memory containers.
+   *
+   * For each entry in `index.ttl`, HEAD the metadata resource. Drop entries
+   * whose resource returns 404 (orphan index pointers — the data is already
+   * gone, the index is a stale advertisement). Returns the URIs that were
+   * removed so the caller can log/audit.
+   *
+   * Out of scope: detecting resources that exist on the Pod but are NOT in
+   * the index (the inverse problem). That requires container listing and is
+   * a separate reconcile flavour.
+   */
+  async reconcileIndex(): Promise<{ removed: string[]; kept: number }> {
+    const index = await this.loadIndex();
+    const removed: string[] = [];
+    const survivors: typeof index.entries = [];
+    for (const entry of index.entries) {
+      const metadataUrl = stripFragment(entry.uri);
+      const head = await this.authFetch(metadataUrl, { method: 'HEAD' });
+      if (head.status === 404) {
+        removed.push(entry.uri);
+        continue;
+      }
+      survivors.push(entry);
+    }
+    if (removed.length > 0) {
+      index.entries = survivors;
+      index.modified = new Date().toISOString();
+      await this.putTurtle(this.indexUrl, serializeIndex(index));
+    }
+    return { removed, kept: survivors.length };
+  }
+
+  /**
    * Write a new memory entry.
    * Atomic protocol per standard §7.1: body → metadata → index PATCH/PUT.
    * Throws on validation failure or HTTP failure. Caller decides retry.

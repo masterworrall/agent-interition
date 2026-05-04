@@ -74,9 +74,12 @@ try {
     case 'supersede':
       await supersede();
       break;
+    case 'reconcile':
+      await reconcile();
+      break;
     default:
       console.error(`Unknown command: ${command}`);
-      console.error('Commands: provision, write, list, read, tags, supersede');
+      console.error('Commands: provision, write, list, read, tags, supersede, reconcile');
       process.exit(1);
   }
 } catch (err) {
@@ -173,6 +176,11 @@ async function supersede() {
   console.log(
     JSON.stringify({ status: 'ok', new: summarise(newEntry), supersedes: newEntry.supersedes }, null, 2),
   );
+}
+
+async function reconcile() {
+  const result = await store.reconcileIndex();
+  console.log(JSON.stringify({ status: 'ok', ...result }, null, 2));
 }
 
 // ── Helpers ──
