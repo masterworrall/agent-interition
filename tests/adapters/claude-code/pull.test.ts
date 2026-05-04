@@ -268,5 +268,95 @@ describe('pull', () => {
     expect(indexMd).toContain('## Projects');
     expect(indexMd).toContain('[Foo](feedback_foo.md)');
     expect(indexMd).toContain('[Bar event](project_2026-05-01-bar.md)');
+    // Hook content from body — keyword search via index relies on this.
+    expect(indexMd).toContain('— feedback body');
+  });
+
+  it('MEMORY.md hook strips a leading markdown heading so it does not duplicate the label', async () => {
+    const body = '# Foo\n\nThe actual rule: prefer printf over heredocs.\n';
+    const data: FakeStoreData = {
+      index: {
+        uri: `${POD}memory/index.ttl`,
+        standardVersion: STANDARD_VERSION,
+        modified: '2026-05-01T10:00:00Z',
+        entries: [
+          {
+            uri: `${POD}memory/preferences/foo.ttl#entry`,
+            type: Preference,
+            label: 'Foo',
+            scope: Private,
+            appliesTo: ['x'],
+            status: Active,
+            modified: '2026-05-01T10:00:00Z',
+          },
+        ],
+      },
+      entries: {
+        [`${POD}memory/preferences/foo.ttl`]: entry({
+          uri: `${POD}memory/preferences/foo.ttl#entry`,
+          type: Preference,
+          label: 'Foo',
+          appliesTo: ['x'],
+          bodyUri: `${POD}memory/preferences/foo.md`,
+          bodyHash: hashBody(body),
+        }),
+      },
+      bodies: { [`${POD}memory/preferences/foo.md`]: body },
+    };
+
+    await pull({
+      store: new FakeStore(data) as never,
+      agentWebId: WEBID,
+      podBase: POD,
+      memoryDir,
+      regenerateIndex: true,
+    });
+
+    const indexMd = await fs.readFile(path.join(memoryDir, 'MEMORY.md'), 'utf8');
+    expect(indexMd).toContain('— The actual rule: prefer printf over heredocs.');
+    // Should NOT have the leading "# Foo" duplicated as the hook
+    expect(indexMd).not.toMatch(/— # Foo/);
+  });
+
+  it('MEMORY.md hook for Reference uses the retrieve text', async () => {
+    const data: FakeStoreData = {
+      index: {
+        uri: `${POD}memory/index.ttl`,
+        standardVersion: STANDARD_VERSION,
+        modified: '2026-05-01T10:00:00Z',
+        entries: [
+          {
+            uri: `${POD}memory/references/work.ttl#entry`,
+            type: Reference,
+            label: 'Work graph',
+            scope: Private,
+            appliesTo: ['planning'],
+            status: Active,
+            modified: '2026-05-01T10:00:00Z',
+          },
+        ],
+      },
+      entries: {
+        [`${POD}memory/references/work.ttl`]: entry({
+          uri: `${POD}memory/references/work.ttl#entry`,
+          type: Reference,
+          label: 'Work graph',
+          authoritativeSource: 'https://crawlout.io/team/work/',
+          retrieve: 'GET /team/work/, parse Turtle, look for int:Task entries.',
+        }),
+      },
+      bodies: {},
+    };
+
+    await pull({
+      store: new FakeStore(data) as never,
+      agentWebId: WEBID,
+      podBase: POD,
+      memoryDir,
+      regenerateIndex: true,
+    });
+
+    const indexMd = await fs.readFile(path.join(memoryDir, 'MEMORY.md'), 'utf8');
+    expect(indexMd).toContain('— GET /team/work/, parse Turtle, look for int:Task entries.');
   });
 });

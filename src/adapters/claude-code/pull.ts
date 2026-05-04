@@ -190,10 +190,11 @@ function renderMemoryIndex(loaded: FetchedEntry[]): string {
     References: [],
     Projects: [],
   };
-  for (const { entry } of loaded) {
+  for (const { entry, body } of loaded) {
     const slug = slugFromUrl(stripFragment(entry.uri));
     const filename = localFilenameFor(entry.type, slug);
-    const line = `- [${entry.label}](${filename})`;
+    const hook = indexHookFor(entry, body);
+    const line = hook ? `- [${entry.label}](${filename}) — ${hook}` : `- [${entry.label}](${filename})`;
     const cc = claudeCodeTypeFor(entry.type);
     if (cc === 'user') groups.Identity.push(line);
     else if (cc === 'feedback') groups.Preferences.push(line);
@@ -209,6 +210,33 @@ function renderMemoryIndex(loaded: FetchedEntry[]): string {
     out.push('');
   }
   return out.join('\n');
+}
+
+/**
+ * Build a one-line keyword hook for MEMORY.md. Search-via-index relies on
+ * keywords appearing in the index line so the agent has a reason to open the
+ * topic file. Without a hook, an agent searching for "heredoc" against an
+ * index line that only says "Test preference" misses real content.
+ *
+ * Strategy: prefer the entry's body's lead sentence (truncated). Fall back
+ * to the Reference retrieve text. Skip if it'd just duplicate the label.
+ */
+function indexHookFor(entry: MemoryEntry, body: string | undefined): string | null {
+  const candidate = (() => {
+    if (entry.type === Reference && entry.retrieve) return entry.retrieve;
+    if (body) {
+      // Split into paragraphs, find the first non-heading paragraph. The
+      // body's leading heading is usually the same as the entry's label —
+      // repeating it as the hook adds nothing for keyword search.
+      const paragraphs = body.split(/\n\n/).map((p) => p.trim()).filter(Boolean);
+      const firstProse = paragraphs.find((p) => !/^#+\s/.test(p));
+      return firstProse ?? paragraphs[0] ?? '';
+    }
+    return '';
+  })();
+  if (!candidate) return null;
+  if (candidate === entry.label) return null;
+  return truncate(candidate.replace(/\s+/g, ' '), 120);
 }
 
 function stripFragment(uri: string): string {
