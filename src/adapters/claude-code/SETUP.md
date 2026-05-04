@@ -69,3 +69,28 @@ INTERITION_PASSPHRASE=… NODE_OPTIONS=--dns-result-order=ipv4first \
 `--memory-dir <path>` overrides the default `~/.claude/projects/<cwd>/memory/`.
 `--tags t1,t2` on `pull` restricts the load to entries matching those tags.
 `--regenerate-index` on `pull` rewrites `MEMORY.md` from the loaded entries.
+
+## Token efficiency notes
+
+Selective `pull --tags …` controls **only** the memory layer — the contents
+of `~/.claude/projects/<slug>/memory/`. It does NOT control:
+
+- **Session transcripts** at `~/.claude/projects/<slug>/*.jsonl`. Claude
+  Code preserves prior conversation history across restarts and replays
+  it into context at session start. Memory content quoted in earlier
+  conversations (e.g. via `Read` tool calls or model paraphrase) bleeds
+  forward through this mechanism regardless of how the bridge filters
+  the memory layer.
+- **The system prompt and any IDE/CLAUDE.md context.**
+
+Practical implications:
+
+- For a **fresh agent** in a fresh project dir, `pull --tags …` gives the
+  full token-efficiency benefit the standard claims.
+- For a **long-lived agent**, JSONL accumulation will dominate context
+  cost regardless of selective load. Use `claude /compact` periodically
+  to compress conversation history, or start a fresh project dir for
+  high-stakes runs that need a clean cold start.
+- The bridge does not currently prune JSONL files. If this becomes a
+  recurring cost, raise it as a follow-up — see notes on optional
+  enhancements in the standard's roadmap discussion.
