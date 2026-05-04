@@ -16,11 +16,20 @@
  * Default mapping (used when there's no bridge-state hint, e.g. for a new
  * local file pushed to the Pod for the first time):
  *
- *   user      → mem:Identity
+ *   user      → mem:Preference  (Claude Code's "user" type holds facts
+ *               about the human user — preferences, role, knowledge.
+ *               These map to mem:Preference, not mem:Identity, since
+ *               mem:Identity in the standard is the AGENT's own
+ *               write-once self-concept — a different thing.)
  *   feedback  → mem:Preference
  *   project   → mem:Episode
  *   reference → mem:Reference  (when authoritativeSource is parseable)
  *               mem:Procedure  (otherwise — body is treated as how-to prose)
+ *
+ * Pull-side mapping is asymmetric: mem:Identity is rendered as `user_*.md`
+ * (no native Claude Code type for agent identity) so reading agent-Identity
+ * entries from a pre-existing Pod still works. Bridge state preserves the
+ * precise standard type so round-trip pushes don't reclassify.
  */
 
 import {
@@ -129,7 +138,7 @@ export function defaultStandardTypeFor(
 ): EntryType {
   switch (claudeType) {
     case 'user':
-      return Identity;
+      return Preference;
     case 'feedback':
       return Preference;
     case 'project':

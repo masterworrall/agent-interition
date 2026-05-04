@@ -88,8 +88,8 @@ describe('serializeFrontmatter', () => {
 });
 
 describe('defaultStandardTypeFor', () => {
-  it('maps user → Identity', () => {
-    expect(defaultStandardTypeFor('user', false)).toBe(Identity);
+  it('maps user → Preference (facts about the human user, NOT agent Identity)', () => {
+    expect(defaultStandardTypeFor('user', false)).toBe(Preference);
   });
   it('maps feedback → Preference', () => {
     expect(defaultStandardTypeFor('feedback', false)).toBe(Preference);
