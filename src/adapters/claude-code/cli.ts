@@ -8,6 +8,12 @@
  *
  * Required env: INTERITION_PASSPHRASE
  *
+ * Server URL resolution order (highest priority first):
+ *   1. SOLID_SERVER_URL env
+ *   2. --serverUrl or --server-url flag
+ *   3. .solid-memory-bridge.json in the project dir computed from --memory-dir
+ *   4. https://crawlout.io (default — emits a warning to stderr)
+ *
  * The default memory dir is derived from the current working directory using
  * Claude Code's path-encoding convention:
  *   /Users/paul/foo  →  ~/.claude/projects/-Users-paul-foo/memory/
@@ -15,19 +21,27 @@
 
 import path from 'node:path';
 import os from 'node:os';
+import dns from 'node:dns';
 import { promises as fs } from 'node:fs';
 import { initStore, loadCredentials } from '../../cli/credentials-store.js';
 import { getAuthenticatedFetch } from '../../auth/client-credentials.js';
-import { requireArg, getArg, getServerUrl, getPassphrase } from '../../cli/args.js';
+import { requireArg, getArg, getPassphrase } from '../../cli/args.js';
 import { MemoryStore } from '../../memory/store.js';
 import { pull } from './pull.js';
 import { push } from './push.js';
+
+interface BridgeConfig {
+  agent?: string;
+  serverUrl?: string;
+  ipv4First?: boolean;
+}
+
+const DEFAULT_SERVER_URL = 'https://crawlout.io';
 
 const agent = requireArg(
   'agent',
   'Usage: solid-memory-bridge --agent <name> <pull|push|reconstitute> [options]',
 );
-const serverUrl = getServerUrl();
 const command = process.argv
   .slice(2)
   .find((a) => a === 'pull' || a === 'push' || a === 'reconstitute');
@@ -37,13 +51,38 @@ if (!command) {
 }
 
 const memoryDir = getArg('memory-dir') ?? defaultMemoryDir();
+const projectConfig = await readBridgeConfig(memoryDir);
+const serverUrl = resolveServerUrl(projectConfig);
+const useIpv4First = resolveIpv4First(projectConfig);
+if (useIpv4First) dns.setDefaultResultOrder('ipv4first');
+
 const tagsRaw = getArg('tags');
 const tags = tagsRaw ? tagsRaw.split(',').map((t) => t.trim()).filter(Boolean) : undefined;
 const dryRun = process.argv.includes('--dry-run');
 const regenerateIndex = process.argv.includes('--regenerate-index');
 
 initStore(getPassphrase());
-const creds = loadCredentials(agent, serverUrl);
+let creds;
+try {
+  creds = loadCredentials(agent, serverUrl);
+} catch (err) {
+  // If we resolved to the default crawlout.io and it failed, the most likely
+  // cause is that the project should be pointing at a different server. Hint
+  // toward init-project.sh rather than restating the unhelpful default.
+  if (serverUrl === DEFAULT_SERVER_URL && !process.env.SOLID_SERVER_URL && !projectConfig?.serverUrl) {
+    console.error(
+      JSON.stringify({
+        error: 'no-server-resolved',
+        message:
+          'No SOLID_SERVER_URL set and no project bridge config found. If your agent is on a non-default server, run solid-context-memory/scripts/init-project.sh first to record its serverUrl, or set SOLID_SERVER_URL in your environment.',
+        memoryDir,
+        triedServer: serverUrl,
+      }),
+    );
+    process.exit(2);
+  }
+  throw err;
+}
 const authFetch = await getAuthenticatedFetch(serverUrl, creds.id, creds.secret);
 const store = new MemoryStore({
   podBase: creds.podUrl,
@@ -121,4 +160,33 @@ function defaultMemoryDir(): string {
   const cwd = process.cwd();
   const slug = cwd.replace(/\//g, '-');
   return path.join(os.homedir(), '.claude', 'projects', slug, 'memory');
+}
+
+async function readBridgeConfig(memoryDir: string): Promise<BridgeConfig | null> {
+  const configPath = path.join(path.dirname(memoryDir), '.solid-memory-bridge.json');
+  try {
+    const text = await fs.readFile(configPath, 'utf8');
+    return JSON.parse(text) as BridgeConfig;
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw err;
+  }
+}
+
+function resolveServerUrl(config: BridgeConfig | null): string {
+  if (process.env.SOLID_SERVER_URL) return process.env.SOLID_SERVER_URL;
+  const flag = getArg('serverUrl') ?? getArg('server-url');
+  if (flag) return flag;
+  if (config?.serverUrl) return config.serverUrl;
+  return DEFAULT_SERVER_URL;
+}
+
+function resolveIpv4First(config: BridgeConfig | null): boolean {
+  // Explicit env wins
+  if (process.env.NODE_OPTIONS?.includes('--dns-result-order=ipv4first')) return true;
+  // Project config flag — defaults to true unless explicitly false
+  if (config?.ipv4First === false) return false;
+  // Default true: harmless on networks where ipv4first works the same as default,
+  // and necessary on macOS where Node's default IPv6-first resolution can stall.
+  return true;
 }

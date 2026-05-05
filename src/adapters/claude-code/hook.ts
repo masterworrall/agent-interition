@@ -1,4 +1,3 @@
-#!/usr/bin/env tsx
 /**
  * Claude Code PostToolUse hook for the Solid Memory bridge.
  *
