@@ -1,11 +1,31 @@
+import dns from 'node:dns';
 import { loginWithPassword, deleteAccount } from '../bootstrap/css-client.js';
-import { initStore, loadCredentials, deleteAgentCredentials } from './credentials-store.js';
-import { requireArg, getServerUrl, getPassphrase } from './args.js';
+import { initStore, loadCredentials, deleteAgentCredentials, discoverAgentServer } from './credentials-store.js';
+import { requireArg, getArg, getPassphrase } from './args.js';
 
-const name = requireArg('name', 'Usage: deprovision --name <agent-name>');
-const serverUrl = getServerUrl();
+dns.setDefaultResultOrder('ipv4first');
+
+const name = requireArg('name', 'Usage: deprovision --name <agent-name> [--serverUrl <url>]');
 
 initStore(getPassphrase());
+
+// Resolution chain mirrors get-token: env → flag → discover from store.
+function resolveServerUrl(agentName: string): string {
+  return (
+    process.env.SOLID_SERVER_URL ??
+    getArg('serverUrl') ??
+    getArg('server-url') ??
+    discoverAgentServer(agentName)
+  );
+}
+
+let serverUrl: string;
+try {
+  serverUrl = resolveServerUrl(name);
+} catch (err) {
+  console.error(JSON.stringify({ error: (err as Error).message }));
+  process.exit(2);
+}
 
 interface DeprovisionResult {
   status: 'ok' | 'partial';

@@ -166,6 +166,61 @@ export function deleteAgentCredentials(name: string, serverUrl: string): void {
   }
 }
 
+/**
+ * Discover the server URL for an agent based on what's in the credential store.
+ *
+ * Returns the unique server origin (`http://host:port` or `https://host`) if
+ * the agent has credentials for exactly one server. Throws otherwise — the
+ * caller must then disambiguate via env or flag.
+ *
+ * Both skills (solid-webid-pod, solid-context-memory) use this to avoid
+ * forcing the user/agent to specify a serverUrl when it can be inferred.
+ *
+ * The protocol is derived from the stored WebID, since serverKey() strips
+ * the protocol when encoding the directory name.
+ */
+export function discoverAgentServer(name: string): string {
+  const agentDir = join(getStoreDir(), name);
+  if (!existsSync(agentDir)) {
+    throw new Error(`No credentials directory for agent "${name}". Run provision first.`);
+  }
+
+  const entries = readdirSync(agentDir, { withFileTypes: true });
+  const candidates: Array<{ path: string; key: string }> = [];
+
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name === 'credentials.enc') {
+      // legacy flat path
+      candidates.push({ path: join(agentDir, 'credentials.enc'), key: '(legacy)' });
+    } else if (entry.isDirectory()) {
+      const candidate = join(agentDir, entry.name, 'credentials.enc');
+      if (existsSync(candidate)) {
+        candidates.push({ path: candidate, key: entry.name });
+      }
+    }
+  }
+
+  if (candidates.length === 0) {
+    throw new Error(`No credentials found for agent "${name}". Run provision first.`);
+  }
+  if (candidates.length > 1) {
+    const keys = candidates.map((c) => c.key).join(', ');
+    throw new Error(
+      `Agent "${name}" has credentials for multiple servers (${keys}). Pass --serverUrl or set SOLID_SERVER_URL to disambiguate.`,
+    );
+  }
+
+  // Decrypt the single candidate to extract origin from WebID. Reuses the
+  // existing getPassphrase()/decrypt() pair, so legacy and new paths work
+  // through the same crypto path.
+  const passphrase = getPassphrase();
+  const raw = readFileSync(candidates[0].path, 'utf-8');
+  const payload: EncryptedPayload = JSON.parse(raw);
+  const decrypted = decrypt(payload, passphrase);
+  const creds = JSON.parse(decrypted) as StoredCredentials;
+  return new URL(creds.webId).origin;
+}
+
 export function listAgents(): string[] {
   const dir = getStoreDir();
   if (!existsSync(dir)) return [];

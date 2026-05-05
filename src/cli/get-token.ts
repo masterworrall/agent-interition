@@ -1,10 +1,33 @@
-import { initStore, loadCredentials } from './credentials-store.js';
-import { requireArg, getServerUrl, getPassphrase } from './args.js';
+import dns from 'node:dns';
+import { initStore, loadCredentials, discoverAgentServer } from './credentials-store.js';
+import { requireArg, getArg, getPassphrase } from './args.js';
 
-const agent = requireArg('agent', 'Usage: get-token --agent <name>');
-const serverUrl = getServerUrl();
+dns.setDefaultResultOrder('ipv4first');
+
+const agent = requireArg('agent', 'Usage: get-token --agent <name> [--serverUrl <url>]');
 
 initStore(getPassphrase());
+
+// Server-URL resolution chain:
+//   SOLID_SERVER_URL env  →  --serverUrl/--server-url flag  →  discover from store.
+// If discovery finds zero or more than one server for this agent, the helper
+// throws with a clear message — no silent default to crawlout.io.
+function resolveServerUrl(agentName: string): string {
+  return (
+    process.env.SOLID_SERVER_URL ??
+    getArg('serverUrl') ??
+    getArg('server-url') ??
+    discoverAgentServer(agentName)
+  );
+}
+
+let serverUrl: string;
+try {
+  serverUrl = resolveServerUrl(agent);
+} catch (err) {
+  console.error(JSON.stringify({ error: (err as Error).message }));
+  process.exit(2);
+}
 
 (async () => {
   const creds = loadCredentials(agent, serverUrl);
