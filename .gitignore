@@ -9,6 +9,7 @@ coverage/
 .DS_Store
 *.log
 /skill/
+/claude-code-skill-build/
 # Legacy start scripts with hardcoded secrets (replaced by .env pattern)
 start-local.sh
 start-remote.sh

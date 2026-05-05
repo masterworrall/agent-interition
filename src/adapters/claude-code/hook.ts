@@ -105,7 +105,15 @@ function readStdinJson(): Promise<HookPayload> {
 
 function runPush(memoryDir: string, config: ProjectConfig): Promise<void> {
   return new Promise((resolve, reject) => {
-    const cliPath = path.resolve(new URL(import.meta.url).pathname, '../cli.ts');
+    // Resolve sibling memory-bridge entry. When this module runs from the
+    // bundled skill at ${CLAUDE_SKILL_DIR}/bin/hook.js, sibling lookup finds
+    // bin/memory-bridge.js (the bundled CLI). When running from source via
+    // tsx, sibling lookup finds cli.ts in the same directory.
+    const here = new URL(import.meta.url).pathname;
+    const bundled = path.resolve(path.dirname(here), 'memory-bridge.js');
+    const fromSource = path.resolve(path.dirname(here), 'cli.ts');
+    const cliPath = path.basename(here) === 'hook.js' ? bundled : fromSource;
+    const useTsx = cliPath.endsWith('.ts');
     const env: NodeJS.ProcessEnv = {
       ...process.env,
       SOLID_SERVER_URL: config.serverUrl,
@@ -113,11 +121,17 @@ function runPush(memoryDir: string, config: ProjectConfig): Promise<void> {
     if (config.ipv4First !== false) {
       env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ?? ''} --dns-result-order=ipv4first`.trim();
     }
-    const child = spawn(
-      'npx',
-      ['--yes', 'tsx', cliPath, '--agent', config.agent, 'push', '--memory-dir', memoryDir],
-      { env, stdio: ['ignore', 'pipe', 'pipe'] },
-    );
+    const child = useTsx
+      ? spawn(
+          'npx',
+          ['--yes', 'tsx', cliPath, '--agent', config.agent, 'push', '--memory-dir', memoryDir],
+          { env, stdio: ['ignore', 'pipe', 'pipe'] },
+        )
+      : spawn(
+          'node',
+          [cliPath, '--agent', config.agent, 'push', '--memory-dir', memoryDir],
+          { env, stdio: ['ignore', 'pipe', 'pipe'] },
+        );
     let stderrBuf = '';
     child.stdout.on('data', () => {}); // discard JSON output; hook is fire-and-forget
     child.stderr.on('data', (d) => (stderrBuf += d.toString('utf8')));

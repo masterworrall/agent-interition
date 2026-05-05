@@ -1,0 +1,119 @@
+---
+name: solid-webid-pod
+description: Provision and manage a Solid WebID and Pod for this agent. Provides authenticated read/write to Solid resources via Bearer tokens. Use when the agent needs persistent identity and personal data storage on the open web.
+version: 0.1.0
+allowed-tools:
+  - Bash(${CLAUDE_SKILL_DIR}/scripts/*)
+  - Bash(curl *)
+  - Bash(jq *)
+---
+
+# Solid WebID and Pod
+
+This skill gives this agent its own **WebID** (identity on the web) and a **Solid Pod** (personal data store), backed by a Community Solid Server (CSS). With it the agent can read, write, and selectively share resources on the open web while keeping data under its (and its user's) control.
+
+## When to use this skill
+
+- The agent needs persistent identity that other agents and services can verify
+- The agent needs to store data outside its session memory (across sessions, hosts, harnesses)
+- The agent needs to share or receive specific resources from another agent under access control
+- The agent needs to dereference an authoritative source on Solid that requires authentication
+
+## Setup before first use
+
+Before any command runs, two pieces of environment must be in place. The agent should fail fast and ask the user if either is missing — do not invent or default these.
+
+| Variable | Purpose | How to set |
+|----------|---------|-----------|
+| `INTERITION_PASSPHRASE` | Encrypts local credentials at rest | Export in shell profile or set in Claude Code settings.json `env` |
+| `SOLID_SERVER_URL` | Which CSS this agent talks to | Same; default `https://crawlout.io` if unset |
+
+Encrypted credentials live at `~/.interition/agents/<agent-name>/<server-key>/credentials.enc`. The passphrase never leaves the device; the server never sees it.
+
+## Operations
+
+All scripts are at `${CLAUDE_SKILL_DIR}/scripts/`. Each script reads the encrypted credentials, derives a Bearer token where needed, makes the HTTP call, and emits JSON on stdout. Errors go to stderr with a non-zero exit code.
+
+### Provision identity and storage
+
+Creates a WebID and Pod for an agent. Run once per unique agent name on a given server.
+
+```bash
+${CLAUDE_SKILL_DIR}/scripts/provision.sh --name <agent-name> [--displayName "<display name>"]
+```
+
+**Output:** `{"status":"ok","agent":"<n>","webId":"<url>","podUrl":"<url>"}`
+
+### Get a Bearer token (for any authenticated Solid operation)
+
+```bash
+${CLAUDE_SKILL_DIR}/scripts/get-token.sh --agent <agent-name>
+```
+
+**Output:** `{"token":"eyJ...","expiresIn":600,"serverUrl":"<url>","podUrl":"<url>","webId":"<url>"}`
+
+Tokens last 600s. Re-fetch if older than ~8 minutes.
+
+### Read a Solid resource (authenticated)
+
+Standard W3C Solid HTTP — done with `curl` and the Bearer token. The skill does not wrap this in a proprietary script; the agent constructs the request from the spec.
+
+```bash
+TOKEN=$(${CLAUDE_SKILL_DIR}/scripts/get-token.sh --agent <agent-name> | jq -r '.token')
+curl -s -H "Authorization: Bearer $TOKEN" "<resource-url>"
+```
+
+For PUT, PATCH, DELETE, ACL grant/revoke, and other operations, see `${CLAUDE_SKILL_DIR}/references/solid-http-reference.md`.
+
+### List provisioned agents on this device
+
+```bash
+${CLAUDE_SKILL_DIR}/scripts/status.sh
+```
+
+### Deprovision identity and storage
+
+Tears down a WebID + Pod completely. Requires confirmation (the script will prompt) before destructive action.
+
+```bash
+${CLAUDE_SKILL_DIR}/scripts/deprovision.sh --name <agent-name>
+```
+
+## Pod structure (after provision)
+
+```
+<podUrl>/
+├── profile/card           — public WebID profile (foaf:Agent + solid:oidcIssuer)
+├── memory/                — agent's private memory (default ACL: owner only)
+├── shared/                — for resources the agent will share with named WebIDs
+└── inbox/                 — incoming notifications (W3C ActivityStreams)
+```
+
+The container layout is opinionated for agent use. The agent can create additional containers/resources as needed — Solid is open.
+
+## Error handling
+
+| Error | Likely cause | Fix |
+|-------|--------------|-----|
+| `No credentials found for agent X on server Y. Run provision first.` | First-run, or server-keyed creds missing | Run `provision.sh --name X` (and confirm `SOLID_SERVER_URL` is set to Y) |
+| `401 Unauthorized` | Token expired, or token from wrong server | Get a fresh token; verify `SOLID_SERVER_URL` matches the resource |
+| `403 Forbidden` | Authenticated, but ACL denies access | Resource owner needs to grant access to this agent's WebID |
+| `INTERITION_PASSPHRASE not set` | Env var missing | Export it before invoking any command |
+
+## Security caveats
+
+- Credentials encrypted at rest with AES-256-GCM, file mode `0600`. Loss of the passphrase means re-provisioning.
+- Tokens are NOT persisted; they're fetched fresh on demand and live in process memory only.
+- The skill never sends `INTERITION_PASSPHRASE` over the wire.
+
+See `${CLAUDE_SKILL_DIR}/references/security.md` for the full threat model.
+
+## Distribution
+
+Currently distributed as a directory copy. To install on another machine:
+
+```bash
+cp -r solid-webid-pod ~/.claude/skills/
+```
+
+Future: published via the Claude Code skill registry when one is available.
