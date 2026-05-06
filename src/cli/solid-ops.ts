@@ -12,6 +12,7 @@
  *   post-message --to <webid> --text <msg> --topic <t>   Post to team chat
  *   read-resource <url>                       GET any Solid resource
  *   write-resource <url> --file <path>        PUT Turtle file to Pod URL
+ *   patch-resource <url> --file <path>        PATCH with SPARQL Update body from file
  *   delete-resource <url>                     DELETE a Solid resource
  *   list-container <url>                      List container members
  */
@@ -46,6 +47,9 @@ switch (command) {
   case 'write-resource':
     await writeResource();
     break;
+  case 'patch-resource':
+    await patchResource();
+    break;
   case 'delete-resource':
     await deleteResource();
     break;
@@ -54,7 +58,7 @@ switch (command) {
     break;
   default:
     console.error(`Unknown command: ${command}`);
-    console.error('Commands: read-chat, post-message, read-resource, write-resource, delete-resource, list-container');
+    console.error('Commands: read-chat, post-message, read-resource, write-resource, patch-resource, delete-resource, list-container');
     process.exit(1);
 }
 
@@ -173,6 +177,31 @@ async function writeResource() {
   console.log(JSON.stringify({ ok: true, url, status: resp.status }));
 }
 
+async function patchResource() {
+  const url = findPositionalArg();
+  const filePath = getArg('file');
+  if (!url || !filePath) {
+    console.error('Usage: solid-ops --agent <name> patch-resource <url> --file <path>');
+    console.error('  File must contain a SPARQL Update body, e.g.:');
+    console.error('    PREFIX schema: <http://schema.org/>');
+    console.error('    INSERT DATA { <#me> schema:name "Two" . }');
+    process.exit(1);
+  }
+  const { readFileSync } = await import('fs');
+  const body = readFileSync(filePath, 'utf8');
+  const resp = await authFetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/sparql-update' },
+    body,
+  });
+  if (!resp.ok) {
+    const err = await resp.text();
+    console.error(JSON.stringify({ error: `PATCH failed: ${resp.status}`, detail: err }));
+    process.exit(1);
+  }
+  console.log(JSON.stringify({ ok: true, url, status: resp.status }));
+}
+
 async function deleteResource() {
   const url = findPositionalArg();
   if (!url) {
@@ -271,7 +300,7 @@ function findCommand(): string {
     return argv[i];
   }
   console.error('No command specified.');
-  console.error('Commands: read-chat, post-message, read-resource, write-resource, delete-resource, list-container');
+  console.error('Commands: read-chat, post-message, read-resource, write-resource, patch-resource, delete-resource, list-container');
   process.exit(1);
 }
 
