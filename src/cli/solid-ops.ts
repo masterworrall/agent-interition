@@ -12,6 +12,7 @@
  *   post-message --to <webid> --text <msg> --topic <t>   Post to team chat
  *   read-resource <url>                       GET any Solid resource
  *   write-resource <url> --file <path>        PUT Turtle file to Pod URL
+ *   delete-resource <url>                     DELETE a Solid resource
  *   list-container <url>                      List container members
  */
 
@@ -45,12 +46,15 @@ switch (command) {
   case 'write-resource':
     await writeResource();
     break;
+  case 'delete-resource':
+    await deleteResource();
+    break;
   case 'list-container':
     await listContainer();
     break;
   default:
     console.error(`Unknown command: ${command}`);
-    console.error('Commands: read-chat, post-message, read-resource, write-resource, list-container');
+    console.error('Commands: read-chat, post-message, read-resource, write-resource, delete-resource, list-container');
     process.exit(1);
 }
 
@@ -169,6 +173,21 @@ async function writeResource() {
   console.log(JSON.stringify({ ok: true, url, status: resp.status }));
 }
 
+async function deleteResource() {
+  const url = findPositionalArg();
+  if (!url) {
+    console.error('Usage: solid-ops --agent <name> delete-resource <url>');
+    process.exit(1);
+  }
+  const resp = await authFetch(url, { method: 'DELETE' });
+  if (!resp.ok) {
+    const err = await resp.text();
+    console.error(JSON.stringify({ error: `DELETE failed: ${resp.status}`, detail: err }));
+    process.exit(1);
+  }
+  console.log(JSON.stringify({ ok: true, url, status: resp.status }));
+}
+
 async function listContainer() {
   const url = findPositionalArg();
   if (!url) {
@@ -252,7 +271,7 @@ function findCommand(): string {
     return argv[i];
   }
   console.error('No command specified.');
-  console.error('Commands: read-chat, post-message, read-resource, list-container');
+  console.error('Commands: read-chat, post-message, read-resource, write-resource, delete-resource, list-container');
   process.exit(1);
 }
 
