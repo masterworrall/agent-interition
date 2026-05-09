@@ -157,6 +157,69 @@ Security hardening applied in both modes:
 
 See [Dogfooding Setup Guide](docs/dogfooding-setup.md) for full details.
 
+## Claude Code skills (alternative distribution)
+
+Beyond the OpenClaw Skill described above, this repo also packages two **Claude Code** skills under `claude-code-skill/`:
+
+| Skill | Purpose |
+|---|---|
+| [`solid-webid-pod`](claude-code-skill/solid-webid-pod/SKILL.md) | Provisions a WebID + Pod for a Claude Code agent and provides authenticated Pod access (Bearer token via client credentials). |
+| [`solid-context-memory`](claude-code-skill/solid-context-memory/SKILL.md) | Mirrors a Claude Code project's memory (`~/.claude/projects/<slug>/memory/`) to the agent's Pod under typed RDF. Supports `mem:Reference` pointers to canonical content elsewhere, push / pull / reconstitute. |
+
+These are an **alternative to** the OpenClaw distribution above; they do not require Docker. A Claude Code agent gets a Pod-resident WebID, identity, and memory automatically once installed.
+
+### Build and install
+
+```bash
+npm install
+npm run build
+node scripts/build-claude-code-skill.js --skill solid-webid-pod      --install
+node scripts/build-claude-code-skill.js --skill solid-context-memory --install
+```
+
+`--install` copies each skill into `~/.claude/skills/<name>/`. Both must be installed for the memory bridge to work — `solid-context-memory` depends on `solid-webid-pod`'s identity layer.
+
+### Provision an agent (once per agent)
+
+```bash
+~/.claude/skills/solid-webid-pod/scripts/provision.sh --name <agent-name>
+```
+
+Encrypts and stores credentials at `~/.interition/agents/<agent-name>/credentials.enc`.
+
+### Initialise a workspace (once per Claude Code workspace)
+
+```bash
+~/.claude/skills/solid-context-memory/scripts/init-project.sh \
+  --project-dir <absolute-path-to-workspace> \
+  --agent <agent-name> \
+  --server-url https://crawlout.io
+```
+
+This step:
+
+1. Drops a `.solid-memory-bridge.json` config in `~/.claude/projects/<slug>/` so the bridge knows which agent and Pod to use for that workspace.
+2. **Patches the workspace's `CLAUDE.md`** with a marker-bounded orientation block so the agent knows the bridge is active and narrates Pod-resident memory correctly. Idempotent — re-running replaces the block in place between markers, doesn't duplicate.
+
+Optional flag `--no-claude-md` skips the CLAUDE.md patch.
+
+### Install the hook (once per Claude Code installation)
+
+```bash
+~/.claude/skills/solid-context-memory/scripts/install-hook.sh
+```
+
+Adds a `PostToolUse` hook to `~/.claude/settings.json` that auto-pushes memory writes to the Pod for any initialised workspace.
+
+### Operations and conventions
+
+For pull / push / reconstitute, the type mapping (Claude Code ↔ standard), Reference authoring conventions, validation rules, and error handling, see each skill's `SKILL.md`:
+
+- [`claude-code-skill/solid-webid-pod/SKILL.md`](claude-code-skill/solid-webid-pod/SKILL.md)
+- [`claude-code-skill/solid-context-memory/SKILL.md`](claude-code-skill/solid-context-memory/SKILL.md)
+
+Both files are also installed at `~/.claude/skills/<name>/SKILL.md` after build — that is where the agent reads them from at runtime.
+
 ## Status
 
 **Phase 1: Proof of Concept** — Complete
@@ -305,6 +368,8 @@ agent-interition/
 - [Tutorial](docs/tutorial.md) — "Give your agents memory with Solid"
 - [Token + Curl Test Plan](docs/token-curl-test-plan.md) — End-to-end dogfood test plan
 - [Deprovision Test Plan](docs/deprovision-test-plan.md) — Deprovision feature test plan
+- [`solid-webid-pod` SKILL.md](claude-code-skill/solid-webid-pod/SKILL.md) — Claude Code identity skill (operations, scripts, errors)
+- [`solid-context-memory` SKILL.md](claude-code-skill/solid-context-memory/SKILL.md) — Claude Code memory bridge (authoring conventions, type mapping, validation)
 
 ## Contributing
 
