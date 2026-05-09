@@ -59,7 +59,10 @@ if [ "$PATCH_CLAUDE_MD" = "true" ]; then
       cat "$SNIPPET_PATH" > "$CLAUDE_MD"
       CLAUDE_MD_STATUS="created"
     else
-      # Strip any existing block between the markers (inclusive), then append fresh.
+      # Strip any existing block between the markers (inclusive). We always
+      # re-insert at the top so the orientation primes the agent before any
+      # older prescriptive directives lower in the file ("use X for all
+      # operations") that would otherwise win by primacy.
       if grep -qF "$BEGIN_MARKER" "$CLAUDE_MD"; then
         TMP=$(mktemp)
         awk -v begin="$BEGIN_MARKER" -v endm="$END_MARKER" '
@@ -70,12 +73,28 @@ if [ "$PATCH_CLAUDE_MD" = "true" ]; then
         mv "$TMP" "$CLAUDE_MD"
         CLAUDE_MD_STATUS="updated"
       else
-        CLAUDE_MD_STATUS="appended"
+        CLAUDE_MD_STATUS="inserted"
       fi
-      # Ensure trailing blank line before append, then append the snippet.
-      tail -c 1 "$CLAUDE_MD" | od -An -c | grep -q '\\n' || printf '\n' >> "$CLAUDE_MD"
-      printf '\n' >> "$CLAUDE_MD"
-      cat "$SNIPPET_PATH" >> "$CLAUDE_MD"
+
+      # Insert near the top: keep the file's first H1 as the title, then the
+      # orientation block, then the rest. If the file does not start with an
+      # H1, the orientation goes at the very top.
+      TMP=$(mktemp)
+      FIRST_LINE=$(head -n 1 "$CLAUDE_MD")
+      case "$FIRST_LINE" in
+        "# "*)
+          printf '%s\n\n' "$FIRST_LINE" > "$TMP"
+          cat "$SNIPPET_PATH" >> "$TMP"
+          printf '\n' >> "$TMP"
+          tail -n +2 "$CLAUDE_MD" >> "$TMP"
+          ;;
+        *)
+          cat "$SNIPPET_PATH" > "$TMP"
+          printf '\n' >> "$TMP"
+          cat "$CLAUDE_MD" >> "$TMP"
+          ;;
+      esac
+      mv "$TMP" "$CLAUDE_MD"
     fi
   fi
 fi
