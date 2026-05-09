@@ -95,12 +95,19 @@ export async function push(opts: PushOptions): Promise<PushResult> {
     const bodyHash = hashBody(parsed.body);
     const existing = state.entries[filename];
 
+    // A171: frontmatter may declare `authoritativeSource: <URL>`. When present
+    // on a new `reference_*.md` file (no bridge-state hint yet), it tips the
+    // type classification toward mem:Reference instead of falling back to
+    // mem:Procedure. This is the only path to create a new Reference from a
+    // local file.
+    const fmAuthSource = parsed.frontmatter.authoritativeSource;
+
     // Unchanged-body fast path. For non-Reference entries, the body hash on
     // the Pod (existing.bodyHash) is the comparison; for Reference entries,
     // there is no Pod-side body — compare against the rendered body hash we
     // recorded at pull time.
     const previousType = existing?.standardType;
-    const isReference = (previousType ?? defaultStandardTypeFor(claudeType, false)) === Reference;
+    const isReference = (previousType ?? defaultStandardTypeFor(claudeType, !!fmAuthSource)) === Reference;
     const referenceBodyUnchanged =
       isReference && existing?.renderedBodyHash !== undefined && existing.renderedBodyHash === bodyHash;
 
@@ -121,7 +128,7 @@ export async function push(opts: PushOptions): Promise<PushResult> {
       continue;
     }
 
-    const standardType = previousType ?? defaultStandardTypeFor(claudeType, false);
+    const standardType = previousType ?? defaultStandardTypeFor(claudeType, !!fmAuthSource);
     const tagsForEntry =
       existing?.appliesTo && existing.appliesTo.length > 0
         ? existing.appliesTo
@@ -135,15 +142,29 @@ export async function push(opts: PushOptions): Promise<PushResult> {
     };
 
     if (standardType === Reference) {
-      if (!existing?.authoritativeSource) {
+      // A171: source the URL from existing bridge state (preserves prior
+      // round-trips) or from the local file's frontmatter (the new path that
+      // lets agents create References from local files alone).
+      const authSource = existing?.authoritativeSource ?? fmAuthSource;
+      if (!authSource) {
         skipped.push({
           localFile: filename,
-          reason: 'cannot push a new Reference without an authoritativeSource — write via the memory CLI',
+          reason: 'Reference entry needs `authoritativeSource: <URL>` in the frontmatter (no other write path).',
         });
         continue;
       }
-      writeInput.authoritativeSource = existing.authoritativeSource;
-      if (existing.retrieve) writeInput.retrieve = existing.retrieve;
+      // Reference entries cannot carry a body. Reject prose with a clear
+      // message so the operator knows to either move the prose elsewhere or
+      // convert to a Procedure entry.
+      if (parsed.body.trim().length > 0) {
+        skipped.push({
+          localFile: filename,
+          reason: 'Reference entry must have an empty body. The authoritative source carries the content; this file is the pointer.',
+        });
+        continue;
+      }
+      writeInput.authoritativeSource = authSource;
+      if (existing?.retrieve) writeInput.retrieve = existing.retrieve;
     } else {
       writeInput.body = parsed.body;
       if (standardType === Episode && existing?.occurred) {
