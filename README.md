@@ -220,6 +220,25 @@ For pull / push / reconstitute, the type mapping (Claude Code ↔ standard), Ref
 
 Both files are also installed at `~/.claude/skills/<name>/SKILL.md` after build — that is where the agent reads them from at runtime.
 
+### Optional: install `solid-ops` to a team-shared location
+
+`src/cli/solid-ops.ts` is the team's CLI for ad-hoc Pod operations (read-chat, post-message, read-resource, write-resource, patch-resource, delete-resource, list-container). It is **not** packaged as a Claude Code skill — by design, the published `solid-webid-pod` skill stays minimal and spec-faithful for the OpenClaw distribution; `solid-ops` is internal team tooling.
+
+To deploy a self-contained bundle of `solid-ops` to a stable shared path on your machine (so internal CLAUDE.md files can reference it without coupling to a specific repo checkout location):
+
+```bash
+cp .env.local.example .env.local
+# edit .env.local and set, for example:
+#   SOLID_OPS_DEPLOY_DIR=$HOME/Development/interition/team-tools/solid-ops
+
+npm run build
+npm run install:team-tools
+```
+
+This bundles `src/cli/solid-ops.ts` via esbuild into a single self-contained file plus a thin shell wrapper (`solid-ops`) at the path you specified. `.env.local` is gitignored — the public repo carries no internal paths.
+
+External consumers can ignore this step entirely; nothing happens unless `SOLID_OPS_DEPLOY_DIR` is set.
+
 ## Status
 
 **Phase 1: Proof of Concept** — Complete

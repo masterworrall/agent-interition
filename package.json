@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "build": "tsc",
     "skill:build": "node scripts/build-skill.js",
+    "install:team-tools": "sh scripts/install-team-tools.sh",
     "clean": "rm -rf dist .solid-data skill"
   },
   "dependencies": {
