@@ -304,6 +304,68 @@ export class MemoryStore {
     return newEntry;
   }
 
+  /**
+   * In-place update of an existing entry at a known URI.
+   *
+   * Pure overwrite — no supersede chain, no movement to /superseded/, no
+   * change to the resource URI. Used by the bridge when a local memory
+   * file is edited (frontmatter or body change) and we want the Pod
+   * resource to reflect the new state at the same logical URI.
+   *
+   * Differs from `supersede()`:
+   *   - supersede mints a new URI from the slug, moves old → /superseded/,
+   *     sets mem:supersededBy chain. Audit via in-Pod metadata.
+   *   - update keeps the same URI; old body/metadata are overwritten.
+   *     Audit via crawlout-git history under the Pod's data volume.
+   *
+   * Use this for the common edit case (e.g. Episode with renamed
+   * frontmatter — see A171 follow-up bug raised by Eleven 2026-05-09).
+   */
+  async update(existingUri: string, input: WriteEntryInput): Promise<MemoryEntry> {
+    const validation = validateWrite(input);
+    if (!validation.valid) {
+      throw new MemoryValidationError(
+        validation.errors.map((e) => e.message).join('; '),
+        validation.errors,
+      );
+    }
+
+    const metadataUrl = stripFragment(existingUri);
+    const oldEntry = await this.getEntry(metadataUrl);
+
+    // Compute the body URL: prefer the existing one (so renames don't move
+    // the body either). If the old entry had no body but the new input does,
+    // derive a sibling .md path from the metadata URL.
+    let bodyUrl: string | undefined = oldEntry.bodyUri;
+    let computedHash: string | undefined;
+
+    if (input.body) {
+      computedHash = hashBody(input.body);
+      if (!bodyUrl) {
+        bodyUrl = metadataUrl.replace(/\.ttl$/, '.md');
+      }
+      await this.putMarkdown(bodyUrl, input.body);
+    } else if (bodyUrl) {
+      // Input has no body but old had one — drop the old body resource.
+      await this.deleteResource(bodyUrl);
+      bodyUrl = undefined;
+    }
+
+    const newEntry = buildEntry(input, {
+      uri: existingUri,
+      authorWebId: this.agentWebId,
+      bodyUri: bodyUrl,
+      bodyHash: computedHash,
+    });
+    // Preserve the original creation timestamp; this is an update, not a new entry.
+    newEntry.created = oldEntry.created;
+
+    await this.putTurtle(metadataUrl, serializeEntry(newEntry));
+    await this.replaceIndexEntry(existingUri, newEntry, metadataUrl);
+
+    return newEntry;
+  }
+
   // ── Internals ──
 
   private slugForInput(input: WriteEntryInput): string {

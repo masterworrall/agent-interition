@@ -185,8 +185,21 @@ export async function push(opts: PushOptions): Promise<PushResult> {
 
     try {
       let result;
-      if (existing && standardType !== Identity && standardType !== Episode) {
-        result = await store.supersede(existing.metadataUri, writeInput);
+      if (existing) {
+        if (standardType === Episode) {
+          // A171 follow-up (Eleven 2026-05-09): Episode edits used to call
+          // write() which mints a new URI from the renamed slug, leaving the
+          // old Pod resource as a stale duplicate. Use in-place update for
+          // existing-entry edits so the URI mapping in state.json stays the
+          // canonical truth.
+          result = await store.update(existing.metadataUri, writeInput);
+        } else if (standardType !== Identity) {
+          // Identity is write-once; non-Identity non-Episode uses supersede
+          // chain (current behaviour).
+          result = await store.supersede(existing.metadataUri, writeInput);
+        } else {
+          result = await store.write(writeInput);
+        }
       } else {
         result = await store.write(writeInput);
       }
