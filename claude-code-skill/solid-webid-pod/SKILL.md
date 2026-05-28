@@ -71,6 +71,20 @@ For PUT, PATCH, DELETE, ACL grant/revoke, and other operations, see `${CLAUDE_SK
 ${CLAUDE_SKILL_DIR}/scripts/status.sh
 ```
 
+### Copy an agent's browser-login password to the clipboard
+
+Each provisioned agent has a synthetic CSS account (`<name>@agents.interition.local`) with a generated password, both stored in the encrypted credentials blob. This sub-command decrypts the blob, prints the email + login URL to stdout, and copies the password to the macOS clipboard via `pbcopy` (never to stdout). Use it when a human needs to login to the CSS web UI as the agent — e.g. to inspect the agent's own Pod via a Solid app.
+
+```bash
+${CLAUDE_SKILL_DIR}/scripts/copy-login.sh --agent <agent-name>
+```
+
+**Output (stdout):** `{ "status": "ok", "agent": "<n>", "email": "...", "webId": "...", "podUrl": "...", "loginUrl": "...", "message": "..." }` — no password field.
+
+**Requires macOS** (depends on `pbcopy`). Exits with code 2 on non-macOS or if `pbcopy` is not on PATH. Cross-platform clipboard support is a follow-up; for now, run from your Mac terminal.
+
+**Security note:** the password lives on the system clipboard until something else overwrites it. Clear it (e.g. `pbcopy < /dev/null`) when done.
+
 ### Deprovision identity and storage
 
 Tears down a WebID + Pod completely. Requires confirmation (the script will prompt) before destructive action.
