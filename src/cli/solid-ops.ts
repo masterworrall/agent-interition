@@ -158,15 +158,20 @@ async function readResource() {
 async function writeResource() {
   const url = findPositionalArg();
   const filePath = getArg('file');
+  const contentType = getArg('content-type') ?? 'text/turtle';
   if (!url || !filePath) {
-    console.error('Usage: solid-ops --agent <name> write-resource <url> --file <path>');
+    console.error('Usage: solid-ops --agent <name> write-resource <url> --file <path> [--content-type <mime>]');
+    console.error('  --content-type defaults to text/turtle. Pass text/html, application/json, image/png, etc. for non-RDF resources.');
     process.exit(1);
   }
   const { readFileSync } = await import('fs');
-  const body = readFileSync(filePath, 'utf8');
+  // Read as binary Buffer when the content-type is not text-shaped; reading
+  // a binary file (PNG, JPG, etc.) as utf8 corrupts it on transit.
+  const isBinary = !/^(text\/|application\/(json|ld\+json|sparql-update|n-quads|n-triples|trig|turtle|xml|x-www-form-urlencoded)|image\/svg\+xml)/i.test(contentType);
+  const body = isBinary ? readFileSync(filePath) : readFileSync(filePath, 'utf8');
   const resp = await authFetch(url, {
     method: 'PUT',
-    headers: { 'Content-Type': 'text/turtle' },
+    headers: { 'Content-Type': contentType },
     body,
   });
   if (!resp.ok) {
@@ -174,7 +179,7 @@ async function writeResource() {
     console.error(JSON.stringify({ error: `PUT failed: ${resp.status}`, detail: err }));
     process.exit(1);
   }
-  console.log(JSON.stringify({ ok: true, url, status: resp.status }));
+  console.log(JSON.stringify({ ok: true, url, status: resp.status, contentType }));
 }
 
 async function patchResource() {
