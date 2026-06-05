@@ -15,7 +15,7 @@ Bridges this agent's Claude Code memory directory (`~/.claude/projects/<project>
 ## When to use this skill
 
 - The agent's memory needs to **outlive the session** — durably stored on a Pod, recoverable via reconstitute
-- Memory needs to be **auditable** — when the Pod runs the `crawlout-git` plugin (default at crawlout.io), every memory write becomes a git commit on the Pod's data volume. Audit history is queried via `git log` on the server. Note: the standard's `mem:supersededBy` chain predicates are not currently emitted by this bridge version; audit comes from git, not from in-place chain metadata.
+- Memory needs to be **auditable** — two complementary surfaces. (1) When the Pod runs the `crawlout-git` plugin (default at crawlout.io), every memory write becomes a git commit on the Pod's data volume; audit history is queried via `git log` on the server. (2) Non-Episode entries (Preference / Procedure / Reference) carry standard `mem:supersedes` and `mem:supersededBy` predicates on edit — the prior version is moved to `superseded/<container>/` and the two resources are linked bidirectionally. Episode entries are append-only by design (no chain, in-place overwrite via `store.update()`). Identity entries are write-once.
 - Memory needs to be **shareable** with other agents under WAC ACLs
 - The agent is dereferencing prose-paraphrasing of authoritative sources and you want to **prevent stale-cache bypass** by structurally moving such facts to `mem:Reference`
 
@@ -136,7 +136,7 @@ authoritativeSource: https://crawlout.io/team/docs/Q2Q3-STRATEGY.md
 
 (Body intentionally empty.)
 
-The bridge writes this as a `mem:Reference` resource on the Pod with a `mem:authoritativeSource` predicate; no body is stored.
+The bridge writes this as a `mem:Reference` resource on the Pod with a `mem:authoritativeSource` predicate; no body is stored. **By design, pure `mem:Reference` entries land on the Pod as a single `.ttl` resource with no companion `.md` file** (unlike Preference/Procedure/Episode entries which mirror both). Pod auditors should not flag the missing `.md` as a sync gap — there is no body to ship.
 
 ### Validation
 
