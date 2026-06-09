@@ -37,6 +37,7 @@ const SKILLS = {
       'get-token.js': 'src/cli/get-token.ts',
       'status.js': 'src/cli/status.ts',
       'copy-login.js': 'src/cli/copy-login.ts',
+      'set-password.js': 'src/cli/set-password.ts',
     },
   },
   'solid-context-memory': {

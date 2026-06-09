@@ -85,6 +85,20 @@ ${CLAUDE_SKILL_DIR}/scripts/copy-login.sh --agent <agent-name>
 
 **Security note:** the password lives on the system clipboard until something else overwrites it. Clear it (e.g. `pbcopy < /dev/null`) when done.
 
+### Re-sync a changed account password into the local store
+
+Use this after the agent's CSS account password has been changed directly on the server (e.g. via the web UI). It updates the `password` field in the local encrypted credentials blob so a later `copy-login` hands out the current password.
+
+The new password is read from **stdin** (never passed as an argument, so it stays out of `ps` and shell history). Pipe it in, or run interactively for a hidden prompt.
+
+```bash
+printf '%s' "$NEW_PASSWORD" | ${CLAUDE_SKILL_DIR}/scripts/set-password.sh --agent <agent-name>
+```
+
+**Output (stdout):** `{ "status": "ok", "agent": "...", "serverUrl": "...", "email": "...", "webId": "...", "changed": true|false, "scope": "local-store-only", "message": "..." }`
+
+**Scope:** this changes only the local store. It does **not** change the password on the CSS server, and it does not affect runtime auth (which uses the client id/secret, not the password). `changed` is `false` when the supplied password already matched (idempotent).
+
 ### Deprovision identity and storage
 
 Tears down a WebID + Pod completely. Requires confirmation (the script will prompt) before destructive action.
