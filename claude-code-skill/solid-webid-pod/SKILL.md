@@ -89,10 +89,28 @@ ${CLAUDE_SKILL_DIR}/scripts/copy-login.sh --agent <agent-name>
 
 Use this after the agent's CSS account password has been changed directly on the server (e.g. via the web UI). It updates the `password` field in the local encrypted credentials blob so a later `copy-login` hands out the current password.
 
-The new password is read from **stdin** (never passed as an argument, so it stays out of `ps` and shell history). Pipe it in, or run interactively for a hidden prompt.
+The new password is read from **stdin**, never from an argument — so it never appears in this command's own `ps` entry. The remaining risk is **shell history**: anything you type on the command line is logged in cleartext, so the password must reach stdin from a source that is *not* a literal on the line.
+
+**Preferred — interactive hidden prompt** (nothing sensitive is typed on the command line at all):
 
 ```bash
-printf '%s' "$NEW_PASSWORD" | ${CLAUDE_SKILL_DIR}/scripts/set-password.sh --agent <agent-name>
+${CLAUDE_SKILL_DIR}/scripts/set-password.sh --agent <agent-name> --serverUrl <url>
+# prompts:  New password:  (input hidden, not echoed)
+```
+
+**Non-interactive — feed stdin from a non-literal source** (the secret value never appears in the typed line):
+
+```bash
+op read "op://vault/<agent-name>/password" | ${CLAUDE_SKILL_DIR}/scripts/set-password.sh --agent <agent-name> --serverUrl <url>   # password manager
+pbpaste | ${CLAUDE_SKILL_DIR}/scripts/set-password.sh --agent <agent-name> --serverUrl <url>                                       # clipboard
+${CLAUDE_SKILL_DIR}/scripts/set-password.sh --agent <agent-name> --serverUrl <url> < ./secret.txt                                  # file
+```
+
+**Do NOT** inline the literal password — both of these write it to your shell history in cleartext:
+
+```bash
+printf '%s' 'the-password' | ... set-password.sh ...   # WRONG — password lands in ~/.zsh_history
+... set-password.sh ... <<< 'the-password'             # WRONG — same leak
 ```
 
 **Output (stdout):** `{ "status": "ok", "agent": "...", "serverUrl": "...", "email": "...", "webId": "...", "changed": true|false, "scope": "local-store-only", "message": "..." }`
